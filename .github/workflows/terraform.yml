@@ -9,8 +9,8 @@ on:
       - main
 
 env:
-  OPENTOFU_VERSION: "1.8.0"
-  GO_VERSION: "1.21"
+  OPENTOFU_VERSION: "1.11.0"
+  GO_VERSION: "1.25"
   TF_IN_AUTOMATION: true
 
 jobs:
