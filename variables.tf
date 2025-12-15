@@ -64,7 +64,7 @@ variable "eks_kms_arn" {
 variable "eks_endpoint_access" {
   description = "Controls EKS API endpoint access: 'public', 'private', or 'public-and-private'"
   type        = string
-  default     = "public-and-private"
+  default     = "private"
 
   validation {
     condition     = contains(["public", "private", "public-and-private"], var.eks_endpoint_access)
