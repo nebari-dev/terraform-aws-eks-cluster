@@ -92,12 +92,6 @@ variable "cluster_enabled_log_types" {
   }
 }
 
-variable "create_vpc_endpoints" {
-  description = "Whether to create VPC endpoints for private cluster access. Required for private-only endpoint access."
-  type        = bool
-  default     = true
-}
-
 variable "node_groups" {
   description = <<-EOT
     Map of node groups to create. Each node group supports the following attributes:
@@ -219,10 +213,4 @@ variable "efs_kms_key_id" {
   description = "ARN of KMS key for EFS encryption. IMMUTABLE after creation. Optional if encrypted=true."
   type        = string
   default     = null
-}
-
-variable "efs_storage_class_name" {
-  description = "Name for the Kubernetes StorageClass created for this EFS"
-  type        = string
-  default     = "efs-sc"
 }
