@@ -1,13 +1,40 @@
-# Local value definitions
-# Define local values for computed or transformed variables
-#
-# Example:
-# locals {
-#   common_tags = {
-#     Environment = var.environment
-#     Project     = var.project_id
-#     ManagedBy   = "terraform"
-#   }
-#
-#   resource_prefix = "${var.project_id}-${var.environment}"
-# }
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
+locals {
+  cluster_name = var.project_name
+
+  # VPC and networking resources won't be created if existing subnet IDs are provided
+  create_vpc = length(var.existing_subnet_ids) == 0
+  vpc_cidr   = var.vpc_cidr_block
+
+  # Use existing subnets if provided, otherwise use created subnets
+  subnet_ids = length(var.existing_subnet_ids) > 0 ? var.existing_subnet_ids : aws_subnet.private[*].id
+
+  # Read availability zones from config or automatically discover up to 3 AZs in the region
+  availability_zones = length(var.availability_zones) > 0 ? var.availability_zones : slice(
+    data.aws_availability_zones.available.names,
+    0,
+    min(3, length(data.aws_availability_zones.available.names))
+  )
+
+  # Calculate subnet CIDRs using cidrsubnet
+  # For a /16 VPC, creates /20 subnets (16 + 4 = 20)
+  # Public subnets:  indices 0-7  (10.10.0.0/20, 10.10.16.0/20, 10.10.32.0/20, ...)
+  # Private subnets: indices 8-15 (10.10.128.0/20, 10.10.144.0/20, 10.10.160.0/20, ...)
+  public_subnet_cidrs = [
+    for i in range(length(local.availability_zones)) :
+    cidrsubnet(local.vpc_cidr, 4, i)
+  ]
+  private_subnet_cidrs = [
+    for i in range(length(local.availability_zones)) :
+    cidrsubnet(local.vpc_cidr, 4, i + 8)
+  ]
+
+  # EKS endpoint access configuration
+  endpoint_config = {
+    public_access  = contains(["public", "public-and-private"], var.eks_endpoint_access)
+    private_access = contains(["private", "public-and-private"], var.eks_endpoint_access)
+  }
+}
