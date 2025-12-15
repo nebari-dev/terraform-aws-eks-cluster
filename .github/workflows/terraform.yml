@@ -1,0 +1,134 @@
+name: OpenTofu CI/CD
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+env:
+  OPENTOFU_VERSION: "1.8.0"
+  GO_VERSION: "1.21"
+  TF_IN_AUTOMATION: true
+
+jobs:
+  validate:
+    name: Validate and Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: ${{ env.OPENTOFU_VERSION }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.50.3
+
+      - name: Install terraform-docs
+        run: go install github.com/terraform-docs/terraform-docs@latest
+
+      - name: OpenTofu Format Check
+        run: tofu fmt -check -recursive
+
+      - name: OpenTofu Init
+        run: tofu init -backend=false
+
+      - name: OpenTofu Validate
+        run: tofu validate
+
+      - name: TFLint
+        run: |
+          tflint --init
+          tflint
+
+      - name: Check Documentation
+        run: |
+          # Copy existing README to preserve custom content
+          cp README.md README.md.backup
+          # Generate docs using terraform-docs (same as make docs but without Docker)
+          terraform-docs markdown . --output-file README.md
+          # Compare the generated version with the original
+          if ! diff -q README.md.backup README.md > /dev/null 2>&1; then
+            echo "Documentation is out of date. Please run 'make docs' and commit the changes."
+            echo "Differences found:"
+            diff README.md.backup README.md || true
+            # Restore original README
+            mv README.md.backup README.md
+            exit 1
+          fi
+          # Clean up backup file
+          rm README.md.backup
+
+  test:
+    name: Terratest
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: ${{ env.OPENTOFU_VERSION }}
+          tofu_wrapper: false
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Run Terratest
+        run: |
+          cd test
+          go mod download
+          go test -v -timeout 10m -parallel 2
+
+
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy security scan (table format)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          format: 'table'
+
+      - name: Run Trivy security scan (sarif format)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+        continue-on-error: true
