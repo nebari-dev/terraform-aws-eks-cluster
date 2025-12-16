@@ -8,7 +8,7 @@ resource "aws_eks_cluster" "main" {
     endpoint_public_access  = local.endpoint_config.public_access
     endpoint_private_access = local.endpoint_config.private_access
     public_access_cidrs     = local.endpoint_config.public_access ? var.eks_public_access_cidrs : null
-    security_group_ids      = compact([local.cluster_security_group_id]) # compact will remove nulls
+    security_group_ids      = compact([local.custom_cluster_security_group_id]) # compact will remove nulls
   }
 
   enabled_cluster_log_types = var.cluster_enabled_log_types
@@ -30,7 +30,6 @@ resource "aws_eks_cluster" "main" {
   depends_on = [
     aws_iam_role_policy_attachment.cluster_amazon_eks_cluster_policy,
     aws_iam_role_policy_attachment.cluster_amazon_eks_vpc_resource_controller,
-    aws_vpc_endpoint.interface
   ]
 }
 
@@ -77,11 +76,11 @@ resource "aws_eks_node_group" "main" {
 
   tags = var.tags
 
-  # Ensure IAM policies are attached before creating node groups
   depends_on = [
     aws_iam_role_policy_attachment.node_amazon_eks_worker_node_policy,
     aws_iam_role_policy_attachment.node_amazon_eks_cni_policy,
     aws_iam_role_policy_attachment.node_amazon_ec2_container_registry_read_only,
+    aws_vpc_endpoint.s3
   ]
 
   # Allow external changes without Terraform plan difference
