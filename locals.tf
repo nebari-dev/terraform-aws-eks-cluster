@@ -34,7 +34,7 @@ locals {
 
   # Use passed existing security group ID or created one if none is passed. If no security
   # group was created because existing subnets IDs were provided, this will be null.
-  cluster_security_group_id = (
+  custom_cluster_security_group_id = (
     var.existing_security_group_id != null
     ? var.existing_security_group_id
     : try(aws_security_group.cluster[0].id, null)
