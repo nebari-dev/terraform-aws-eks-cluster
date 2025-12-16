@@ -231,7 +231,7 @@ resource "aws_vpc_endpoint" "interface" {
   service_name        = each.value.service_name
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private[*].id
-  security_group_ids  = [local.cluster_security_group_id]
+  security_group_ids  = compact([local.custom_cluster_security_group_id, aws_eks_cluster.main.vpc_config[0].cluster_security_group_id])
   private_dns_enabled = true
 
   tags = merge(var.tags, {
