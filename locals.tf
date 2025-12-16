@@ -32,9 +32,30 @@ locals {
     cidrsubnet(local.vpc_cidr, 4, i + 8)
   ]
 
+  # Use passed existing security group ID or created one if none is passed. If no security
+  # group was created because existing subnets IDs were provided, this will be null.
+  cluster_security_group_id = (
+    var.existing_security_group_id != null
+    ? var.existing_security_group_id
+    : try(aws_security_group.cluster[0].id, null)
+  )
+
   # EKS endpoint access configuration
   endpoint_config = {
     public_access  = contains(["public", "public-and-private"], var.eks_endpoint_access)
     private_access = contains(["private", "public-and-private"], var.eks_endpoint_access)
   }
+
+  interface_vpc_endpoint_services = local.create_vpc ? [
+    "ec2",
+    "ecr.api",
+    "ecr.dkr",
+    "sts",
+    "eks",
+    "eks-auth",
+    "logs",
+    "elasticloadbalancing",
+    "autoscaling",
+  ] : []
+
 }

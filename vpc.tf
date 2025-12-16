@@ -7,7 +7,9 @@ resource "aws_vpc" "main" {
   enable_dns_hostnames = true
   enable_dns_support   = true
 
-  tags = var.tags
+  tags = merge(var.tags, {
+    Name = "${var.project_name}-vpc"
+  })
 }
 
 resource "aws_internet_gateway" "main" {
@@ -15,7 +17,9 @@ resource "aws_internet_gateway" "main" {
 
   vpc_id = aws_vpc.main[0].id
 
-  tags = var.tags
+  tags = merge(var.tags, {
+    Name = "${var.project_name}-igw"
+  })
 }
 
 resource "aws_subnet" "public" {
@@ -26,7 +30,11 @@ resource "aws_subnet" "public" {
   availability_zone       = local.availability_zones[count.index]
   map_public_ip_on_launch = true
 
-  tags = var.tags
+  tags = merge(var.tags, {
+    Name                     = "${var.project_name}-public-${local.availability_zones[count.index]}"
+    Type                     = "public"
+    "kubernetes.io/role/elb" = "1" # For AWS Load Balancer Controller
+  })
 }
 
 resource "aws_subnet" "private" {
@@ -36,7 +44,11 @@ resource "aws_subnet" "private" {
   cidr_block        = local.private_subnet_cidrs[count.index]
   availability_zone = local.availability_zones[count.index]
 
-  tags = var.tags
+  tags = merge(var.tags, {
+    Name                              = "${var.project_name}-private-${local.availability_zones[count.index]}"
+    Type                              = "private"
+    "kubernetes.io/role/internal-elb" = "1" # For internal load balancers
+  })
 }
 
 resource "aws_eip" "nat" {
@@ -44,7 +56,9 @@ resource "aws_eip" "nat" {
 
   domain = "vpc"
 
-  tags = var.tags
+  tags = merge(var.tags, {
+    Name = "${var.project_name}-eip-nat-${local.availability_zones[count.index]}"
+  })
 
   depends_on = [aws_internet_gateway.main]
 }
@@ -55,7 +69,9 @@ resource "aws_nat_gateway" "main" {
   allocation_id = aws_eip.nat[count.index].id
   subnet_id     = aws_subnet.public[count.index].id
 
-  tags = var.tags
+  tags = merge(var.tags, {
+    Name = "${var.project_name}-nat-${local.availability_zones[count.index]}"
+  })
 
   depends_on = [aws_internet_gateway.main]
 }
@@ -65,7 +81,9 @@ resource "aws_route_table" "public" {
 
   vpc_id = aws_vpc.main[0].id
 
-  tags = var.tags
+  tags = merge(var.tags, {
+    Name = "${var.project_name}-rt-public"
+  })
 }
 
 resource "aws_route" "public_internet" {
@@ -88,7 +106,9 @@ resource "aws_route_table" "private" {
 
   vpc_id = aws_vpc.main[0].id
 
-  tags = var.tags
+  tags = merge(var.tags, {
+    Name = "${var.project_name}-rt-private-${local.availability_zones[count.index]}"
+  })
 }
 
 resource "aws_route" "private_nat" {
@@ -113,7 +133,9 @@ resource "aws_security_group" "cluster" {
   description = "Security group for ${local.cluster_name} EKS cluster"
   vpc_id      = aws_vpc.main[0].id
 
-  tags = var.tags
+  tags = merge(var.tags, {
+    Name = "${var.project_name}-cluster-sg"
+  })
 }
 
 # Allow HTTPS (443) from nodes to control plane
@@ -194,141 +216,47 @@ resource "aws_security_group_rule" "cluster_egress_all" {
   description       = "Allow all outbound traffic"
 }
 
-# =========================================
 # Interface VPC Endpoints
-# Required for AWS API calls from nodes
-# =========================================
 
-resource "aws_vpc_endpoint" "ec2" {
-  count = local.create_vpc ? 1 : 0
+data "aws_vpc_endpoint_service" "interface" {
+  for_each = toset(local.interface_vpc_endpoint_services)
 
-  vpc_id              = aws_vpc.main[0].id
-  service_name        = "com.amazonaws.${data.aws_region.current.region}.ec2"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = aws_subnet.private[*].id
-  security_group_ids  = [local.create_vpc && var.existing_security_group_id == null ? aws_security_group.cluster[0].id : var.existing_security_group_id]
-  private_dns_enabled = true
-
-  tags = var.tags
+  service = each.value
 }
 
-resource "aws_vpc_endpoint" "ecr_api" {
-  count = local.create_vpc ? 1 : 0
+resource "aws_vpc_endpoint" "interface" {
+  for_each = data.aws_vpc_endpoint_service.interface
 
   vpc_id              = aws_vpc.main[0].id
-  service_name        = "com.amazonaws.${data.aws_region.current.region}.ecr.api"
+  service_name        = each.value.service_name
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private[*].id
-  security_group_ids  = [local.create_vpc && var.existing_security_group_id == null ? aws_security_group.cluster[0].id : var.existing_security_group_id]
+  security_group_ids  = [local.cluster_security_group_id]
   private_dns_enabled = true
 
-  tags = var.tags
+  tags = merge(var.tags, {
+    Name = "${var.project_name}-vpce-${each.key}"
+  })
 }
 
-resource "aws_vpc_endpoint" "ecr_dkr" {
+# Gateway VPC Endpoint, required for S3 (pulling image layers)
+
+data "aws_vpc_endpoint_service" "s3" {
   count = local.create_vpc ? 1 : 0
 
-  vpc_id              = aws_vpc.main[0].id
-  service_name        = "com.amazonaws.${data.aws_region.current.region}.ecr.dkr"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = aws_subnet.private[*].id
-  security_group_ids  = [local.create_vpc && var.existing_security_group_id == null ? aws_security_group.cluster[0].id : var.existing_security_group_id]
-  private_dns_enabled = true
-
-  tags = var.tags
+  service      = "s3"
+  service_type = "Gateway"
 }
-
-resource "aws_vpc_endpoint" "sts" {
-  count = local.create_vpc ? 1 : 0
-
-  vpc_id              = aws_vpc.main[0].id
-  service_name        = "com.amazonaws.${data.aws_region.current.region}.sts"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = aws_subnet.private[*].id
-  security_group_ids  = [local.create_vpc && var.existing_security_group_id == null ? aws_security_group.cluster[0].id : var.existing_security_group_id]
-  private_dns_enabled = true
-
-  tags = var.tags
-}
-
-resource "aws_vpc_endpoint" "eks" {
-  count = local.create_vpc ? 1 : 0
-
-  vpc_id              = aws_vpc.main[0].id
-  service_name        = "com.amazonaws.${data.aws_region.current.region}.eks"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = aws_subnet.private[*].id
-  security_group_ids  = [local.create_vpc && var.existing_security_group_id == null ? aws_security_group.cluster[0].id : var.existing_security_group_id]
-  private_dns_enabled = true
-
-  tags = var.tags
-}
-
-resource "aws_vpc_endpoint" "eks_auth" {
-  count = local.create_vpc ? 1 : 0
-
-  vpc_id              = aws_vpc.main[0].id
-  service_name        = "com.amazonaws.${data.aws_region.current.region}.eks-auth"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = aws_subnet.private[*].id
-  security_group_ids  = [local.create_vpc && var.existing_security_group_id == null ? aws_security_group.cluster[0].id : var.existing_security_group_id]
-  private_dns_enabled = true
-
-  tags = var.tags
-}
-
-resource "aws_vpc_endpoint" "logs" {
-  count = local.create_vpc ? 1 : 0
-
-  vpc_id              = aws_vpc.main[0].id
-  service_name        = "com.amazonaws.${data.aws_region.current.region}.logs"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = aws_subnet.private[*].id
-  security_group_ids  = [local.create_vpc && var.existing_security_group_id == null ? aws_security_group.cluster[0].id : var.existing_security_group_id]
-  private_dns_enabled = true
-
-  tags = var.tags
-}
-
-# Elastic Load Balancing
-resource "aws_vpc_endpoint" "elb" {
-  count = local.create_vpc ? 1 : 0
-
-  vpc_id              = aws_vpc.main[0].id
-  service_name        = "com.amazonaws.${data.aws_region.current.region}.elasticloadbalancing"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = aws_subnet.private[*].id
-  security_group_ids  = [local.create_vpc && var.existing_security_group_id == null ? aws_security_group.cluster[0].id : var.existing_security_group_id]
-  private_dns_enabled = true
-
-  tags = var.tags
-}
-
-resource "aws_vpc_endpoint" "autoscaling" {
-  count = local.create_vpc ? 1 : 0
-
-  vpc_id              = aws_vpc.main[0].id
-  service_name        = "com.amazonaws.${data.aws_region.current.region}.autoscaling"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = aws_subnet.private[*].id
-  security_group_ids  = [local.create_vpc && var.existing_security_group_id == null ? aws_security_group.cluster[0].id : var.existing_security_group_id]
-  private_dns_enabled = true
-
-  tags = var.tags
-}
-
-# =========================================
-# Gateway VPC Endpoints
-# Required for S3 (pulling image layers)
-# =========================================
 
 resource "aws_vpc_endpoint" "s3" {
   count = local.create_vpc ? 1 : 0
 
   vpc_id            = aws_vpc.main[0].id
-  service_name      = "com.amazonaws.${data.aws_region.current.region}.s3"
+  service_name      = data.aws_vpc_endpoint_service.s3[0].service_name # From data source
   vpc_endpoint_type = "Gateway"
   route_table_ids   = concat([aws_route_table.public[0].id], aws_route_table.private[*].id)
 
-  tags = var.tags
+  tags = merge(var.tags, {
+    Name = "${var.project_name}-vpce-s3"
+  })
 }

@@ -8,9 +8,7 @@ resource "aws_eks_cluster" "main" {
     endpoint_public_access  = local.endpoint_config.public_access
     endpoint_private_access = local.endpoint_config.private_access
     public_access_cidrs     = local.endpoint_config.public_access ? var.eks_public_access_cidrs : null
-    security_group_ids = local.create_vpc && var.existing_security_group_id == null ? [
-      aws_security_group.cluster[0].id
-    ] : (var.existing_security_group_id != null ? [var.existing_security_group_id] : [])
+    security_group_ids      = compact([local.cluster_security_group_id]) # compact will remove nulls
   }
 
   enabled_cluster_log_types = var.cluster_enabled_log_types
@@ -32,13 +30,7 @@ resource "aws_eks_cluster" "main" {
   depends_on = [
     aws_iam_role_policy_attachment.cluster_amazon_eks_cluster_policy,
     aws_iam_role_policy_attachment.cluster_amazon_eks_vpc_resource_controller,
-    # Ensure VPC endpoints are available before creating cluster
-    aws_vpc_endpoint.ec2,
-    aws_vpc_endpoint.ecr_api,
-    aws_vpc_endpoint.ecr_dkr,
-    aws_vpc_endpoint.sts,
-    aws_vpc_endpoint.eks,
-    aws_vpc_endpoint.eks_auth,
+    aws_vpc_endpoint.interface
   ]
 }
 
