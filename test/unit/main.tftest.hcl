@@ -519,7 +519,7 @@ run "test_node_group_custom_tags" {
 
   variables {
     tags = {
-      Project       = "foobar"
+      Project     = "foobar"
       Environment = "prod"
     }
     node_groups = {
