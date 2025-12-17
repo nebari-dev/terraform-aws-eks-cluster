@@ -2,11 +2,17 @@ name: OpenTofu CI/CD
 
 on:
   pull_request:
-    branches:
-      - main
+    paths:
+      - '**/*.tf'
+      - '**/*.tftest.hcl'
+      - '.github/workflows/terraform.yml'
   push:
     branches:
       - main
+    paths:
+      - '**/*.tf'
+      - '**/*.tftest.hcl'
+      - '.github/workflows/terraform.yml'
 
 env:
   OPENTOFU_VERSION: "1.11.0"
