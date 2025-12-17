@@ -71,6 +71,9 @@ jobs:
           tofu_version: ${{ env.OPENTOFU_VERSION }}
           tofu_wrapper: false
 
+      - name: OpenTofu Init
+        run: tofu init -backend=false
+
       - name: Run tofu test
         run: tofu test -test-directory=test/unit/
 
