@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v1
@@ -73,14 +73,12 @@ jobs:
           rm README.md.backup
 
   test:
-    name: Terratest
+    name: Unit Tests
     runs-on: ubuntu-latest
     needs: validate
-    if: github.event_name == 'pull_request'
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v1
@@ -88,16 +86,8 @@ jobs:
           tofu_version: ${{ env.OPENTOFU_VERSION }}
           tofu_wrapper: false
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Run Terratest
-        run: |
-          cd test
-          go mod download
-          go test -v -timeout 10m -parallel 2
+      - name: Run tofu test
+        run: tofu test -test-directory=test/unit/
 
 
   security-scan:
@@ -110,7 +100,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Run Trivy security scan (table format)
         uses: aquasecurity/trivy-action@master
