@@ -71,6 +71,13 @@ jobs:
           tofu_version: ${{ env.OPENTOFU_VERSION }}
           tofu_wrapper: false
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v5.1.1
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: gha
+
       - name: OpenTofu Init
         run: tofu init -backend=false
 
