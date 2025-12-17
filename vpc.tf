@@ -1,5 +1,3 @@
-data "aws_region" "current" {}
-
 resource "aws_vpc" "main" {
   count = local.create_vpc ? 1 : 0
 
