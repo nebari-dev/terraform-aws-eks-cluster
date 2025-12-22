@@ -22,9 +22,5 @@ resource "aws_efs_mount_target" "main" {
 
   file_system_id = aws_efs_file_system.main[0].id
   subnet_id      = aws_subnet.private[count.index].id
-  security_groups = [
-    local.create_vpc && var.existing_security_group_id == null ?
-    aws_security_group.cluster[0].id :
-    var.existing_security_group_id
-  ]
+  security_groups = [local.custom_cluster_security_group_id]
 }
