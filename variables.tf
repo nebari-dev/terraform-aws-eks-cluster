@@ -73,9 +73,9 @@ variable "eks_endpoint_access" {
 }
 
 variable "eks_public_access_cidrs" {
-  description = "List of CIDR blocks allowed to access the EKS public endpoint. Only used if eks_endpoint_access includes 'public'."
+  description = "List of CIDR blocks allowed to access the EKS public endpoint. Only used if eks_endpoint_access includes 'public'. Default: [0.0.0.0/0] (i.e., all)."
   type        = list(string)
-  default     = null
+  default     = ["0.0.0.0/0"]
 }
 
 variable "cluster_enabled_log_types" {
