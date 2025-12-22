@@ -13,6 +13,16 @@ output "cluster_endpoint" {
   value       = aws_eks_cluster.main.endpoint
 }
 
+output "cluster_certificate_authority_data" {
+  description = "Base64 encoded certificate data required to communicate with the cluster"
+  value       = aws_eks_cluster.main.certificate_authority[0].data
+}
+
+output "cluster_oidc_issuer_url" {
+  description = "OIDC issuer URL for the cluster"
+  value       = aws_eks_cluster.main.identity[0].oidc[0].issuer
+}
+
 output "vpc_id" {
   description = "The ID of the VPC"
   value       = try(aws_vpc.main[0].id, null)
