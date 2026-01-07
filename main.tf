@@ -24,7 +24,6 @@ module "vpc" {
   tags = var.tags
 }
 
-
 # This is a small submodule to create a shared IAM role for node groups to use if an existing
 # role is not passed. This is needed because the terraform-aws-modules/eks/aws module creates
 # individual IAM roles per node group, which seems unnecessary in our case (specially taking
@@ -50,6 +49,10 @@ module "eks" {
   create_security_group = var.existing_security_group_id == null
   security_group_id     = var.existing_security_group_id
 
+  # This is the VPC ID where the security group will be provisioned. If an existing security
+  # group is provided, it does not have any effect.
+  vpc_id = one(module.vpc[*].vpc_id)
+
   subnet_ids              = local.private_subnet_ids
   endpoint_private_access = var.endpoint_private_access
   endpoint_public_access  = var.endpoint_public_access
@@ -60,7 +63,7 @@ module "eks" {
   iam_role_name                 = var.existing_cluster_iam_role_arn == null ? "${var.project_name}-cluster-role" : null
   iam_role_description          = "EKS cluster role for ${var.project_name}"
   iam_role_permissions_boundary = var.iam_role_permissions_boundary
-  
+
   encryption_config = var.eks_kms_arn != null ? {
     provider_key_arn = var.eks_kms_arn
     resources        = ["secrets"]
