@@ -79,7 +79,7 @@ module "eks" {
 module "vpc_endpoints" {
   source = "./modules/vpc-endpoints"
 
-  count = var.create_vpc ? 1 : 0
+  count = var.create_vpc && var.create_vpc_endpoints ? 1 : 0
 
   vpc_id             = one(module.vpc[*].vpc_id)
   subnet_ids         = flatten(module.vpc[*].private_subnets)

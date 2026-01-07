@@ -57,6 +57,12 @@ variable "existing_security_group_id" {
   }
 }
 
+variable "create_vpc_endpoints" {
+  description = "Whether to create VPC endpoints for required AWS services."
+  type        = bool
+  default     = true
+}
+
 ################################################################################
 # Cluster
 ################################################################################
@@ -76,6 +82,11 @@ variable "endpoint_public_access" {
   description = "Indicates whether the Amazon EKS public API server endpoint is enabled."
   type        = bool
   default     = false
+
+  validation {
+    condition = var.endpoint_public_access || var.create_vpc_endpoints
+    error_message = "When 'endpoint_public_access' is false, 'create_vpc_endpoints' must be true to allow cluster access via VPC endpoints."
+  }
 }
 
 variable "eks_kms_arn" {
