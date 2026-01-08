@@ -84,7 +84,7 @@ variable "endpoint_public_access" {
   default     = false
 
   validation {
-    condition = var.endpoint_public_access || var.create_vpc_endpoints
+    condition     = var.endpoint_public_access || var.create_vpc_endpoints
     error_message = "When 'endpoint_public_access' is false, 'create_vpc_endpoints' must be true to allow cluster access via VPC endpoints."
   }
 }
@@ -218,4 +218,3 @@ variable "efs_kms_key_arn" {
   type        = string
   default     = null
 }
-

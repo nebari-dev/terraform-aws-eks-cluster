@@ -1,19 +1,19 @@
-variable vpc_id {
+variable "vpc_id" {
   description = "The ID of the VPC where to create the endpoints."
   type        = string
 }
 
-variable subnet_ids {
+variable "subnet_ids" {
   description = "List of subnet IDs for interface VPC endpoints."
   type        = list(string)
 }
 
-variable security_group_ids {
+variable "security_group_ids" {
   description = "List of security group IDs for interface VPC endpoints."
   type        = list(string)
 }
 
-variable route_table_ids {
+variable "route_table_ids" {
   description = "List of route table IDs for gateway VPC endpoints."
   type        = list(string)
 }
