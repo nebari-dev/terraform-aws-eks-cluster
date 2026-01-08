@@ -24,7 +24,7 @@ locals {
   # with the VPC if existing ones are not provided.
   private_subnet_ids = var.create_vpc ? flatten(module.vpc[*].private_subnets) : var.existing_private_subnet_ids
 
-  interface_vpc_endpoint_services = var.create_vpc ? [
+  interface_vpc_endpoint_services = var.create_vpc && var.create_vpc_endpoints ? [
     "ec2",
     "ecr.api",
     "ecr.dkr",
@@ -35,11 +35,11 @@ locals {
     "elasticloadbalancing",
     "autoscaling",
   ] : []
-  gateway_vpc_endpoint_services = var.create_vpc ? [
+  gateway_vpc_endpoint_services = var.create_vpc && var.create_vpc_endpoints ? [
     "s3",
   ] : []
 
-  # Cluster security group is the one automatically created by EKS unless an existing 
+  # Cluster security group is the one automatically created by EKS unless an existing
   # one is provided.
   cluster_security_group_id = var.existing_security_group_id != null ? var.existing_security_group_id : module.eks.cluster_security_group_id
 
@@ -48,6 +48,8 @@ locals {
   # Map node groups to the format expected by the EKS module
   node_groups = {
     for name, config in var.node_groups : name => {
+      name = name
+
       instance_types = [config.instance]
       capacity_type  = config.spot ? "SPOT" : "ON_DEMAND"
       disk_size      = config.disk_size
@@ -60,7 +62,7 @@ locals {
         config.gpu ? "AL2023_x86_64_NVIDIA" : "AL2023_x86_64_STANDARD"
       )
 
-      # Use a shared IAM role for all node groups instead of creating or specifying 
+      # Use a shared IAM role for all node groups instead of creating or specifying
       # individual ones
       create_iam_role = false
       iam_role_arn    = local.node_iam_role_arn
@@ -69,7 +71,7 @@ locals {
 
       # The EKS module expects taints as a map
       taints = {
-        for idx, taint in config.taints : 
+        for idx, taint in config.taints :
         idx => {
           key    = taint.key
           value  = taint.value
