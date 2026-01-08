@@ -40,7 +40,7 @@ module "iam" {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "21.10.1"
+  version = "21.11.0"
 
   name               = var.project_name
   kubernetes_version = var.kubernetes_version
