@@ -49,8 +49,8 @@ test-prod: ## Run only prod example tests
 docs: ## Generate documentation with terraform-docs
 	@echo "Generating documentation..."
 	@docker run --rm --volume "$$(pwd):/terraform-docs" -u $$(id -u) quay.io/terraform-docs/terraform-docs:latest markdown /terraform-docs --output-file README.md
-	@terraform-docs markdown examples/dev > examples/dev/README.md || true
-	@terraform-docs markdown examples/prod > examples/prod/README.md || true
+	@terraform-docs markdown examples/cluster-complete > examples/cluster-complete/README.md || true
+	@terraform-docs markdown examples/cluster-only > examples/cluster-only/README.md || true
 
 clean: ## Clean up temporary files and directories
 	@echo "Cleaning up..."
