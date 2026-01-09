@@ -57,12 +57,6 @@ variable "existing_security_group_id" {
   }
 }
 
-variable "create_vpc_endpoints" {
-  description = "Whether to create VPC endpoints for required AWS services."
-  type        = bool
-  default     = true
-}
-
 ################################################################################
 # Cluster
 ################################################################################

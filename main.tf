@@ -79,12 +79,12 @@ module "eks" {
 module "vpc_endpoints" {
   source = "./modules/vpc-endpoints"
 
-  count = var.create_vpc && var.create_vpc_endpoints ? 1 : 0
+  count = var.create_vpc ? 1 : 0
 
-  vpc_id             = one(module.vpc[*].vpc_id)
-  subnet_ids         = flatten(module.vpc[*].private_subnets)
-  security_group_ids = [module.eks.cluster_security_group_id]
-  route_table_ids    = concat(flatten(module.vpc[*].public_route_table_ids), flatten(module.vpc[*].private_route_table_ids))
+  vpc_id                    = one(module.vpc[*].vpc_id)
+  cluster_security_group_id = module.eks.cluster_primary_security_group_id
+  subnet_ids                = flatten(module.vpc[*].private_subnets)
+  route_table_ids           = concat(flatten(module.vpc[*].public_route_table_ids), flatten(module.vpc[*].private_route_table_ids))
 
   interface_vpc_endpoint_services = local.interface_vpc_endpoint_services
   gateway_vpc_endpoint_services   = local.gateway_vpc_endpoint_services
