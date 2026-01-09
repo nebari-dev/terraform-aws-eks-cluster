@@ -41,7 +41,7 @@ locals {
 
   # Cluster security group is the one automatically created by EKS unless an existing
   # one is provided.
-  cluster_security_group_id = var.existing_security_group_id != null ? var.existing_security_group_id : module.eks.cluster_security_group_id
+  cluster_security_group_id = var.existing_security_group_id != null ? var.existing_security_group_id : module.eks.cluster_primary_security_group_id
 
   node_iam_role_arn = var.existing_node_iam_role_arn != null ? var.existing_node_iam_role_arn : one(module.iam[*].node_iam_role_arn)
 
