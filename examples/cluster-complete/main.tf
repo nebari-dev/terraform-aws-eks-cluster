@@ -19,12 +19,20 @@ module "cluster" {
       min_nodes = 1
       max_nodes = 5
       disk_size = 100
+      labels = {
+        role = "general"
+      }
     }
     worker = {
       instance  = "t3.medium"
       spot      = true
       min_nodes = 1
       max_nodes = 6
+      taints = [{
+        key    = "dedicated"
+        value  = "batch-jobs"
+        effect = "NO_SCHEDULE"
+      }]
     }
   }
 
