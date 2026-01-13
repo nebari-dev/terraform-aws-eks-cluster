@@ -1,4 +1,4 @@
-module "eks" {
+module "cluster" {
   source = "../.."
 
   project_name = "cluster-complete"
@@ -19,17 +19,6 @@ module "eks" {
       min_nodes = 1
       max_nodes = 5
       disk_size = 100
-    }
-    gpu = {
-      instance  = "g4dn.xlarge"
-      min_nodes = 0
-      max_nodes = 3
-      gpu       = true
-      taints = [{
-        key    = "nvidia.com/gpu"
-        value  = "true"
-        effect = "NO_SCHEDULE"
-      }]
     }
     worker = {
       instance  = "t3.medium"
