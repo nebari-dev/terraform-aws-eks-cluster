@@ -24,7 +24,7 @@ variable "availability_zones" {
 }
 
 variable "create_vpc" {
-  description = "Whether to create a new VPC. If false, existing private subnet IDs and security group ID must be provided."
+  description = "Whether to create a new VPC with subnets. If false, existing private subnet IDs and security group ID must be provided."
   type        = bool
   default     = true
 }
@@ -33,6 +33,17 @@ variable "vpc_cidr_block" {
   description = "The CIDR block for the VPC."
   type        = string
   default     = "10.0.0.0/16"
+}
+
+variable "existing_vpc_id" {
+  description = "ID of an existing VPC to use. Required when create_vpc is false."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.create_vpc || var.existing_vpc_id != null
+    error_message = "When 'create_vpc' is false, 'existing_vpc_id' must be provided."
+  }
 }
 
 variable "existing_private_subnet_ids" {
@@ -46,14 +57,20 @@ variable "existing_private_subnet_ids" {
   }
 }
 
+variable "create_security_group" {
+  description = "Whether to create a new security group for the EKS cluster. If false, existing_security_group_id must be provided."
+  type        = bool
+  default     = true
+}
+
 variable "existing_security_group_id" {
-  description = "ID of an existing security group to use if not creating a new VPC."
+  description = "ID of an existing security group to use. Required when create_security_group is false."
   type        = string
   default     = null
 
   validation {
-    condition     = var.create_vpc || var.existing_security_group_id != ""
-    error_message = "When 'create_vpc' is false, 'existing_security_group_id' must be provided."
+    condition     = var.create_security_group || var.existing_security_group_id != null
+    error_message = "When 'create_security_group' is false, 'existing_security_group_id' must be provided."
   }
 }
 
@@ -98,16 +115,30 @@ variable "cluster_enabled_log_types" {
   }
 }
 
+variable "create_iam_roles" {
+  description = "Whether to create new IAM roles for the EKS cluster and node groups. If false, existing_cluster_iam_role_arn and existing_node_iam_role_arn must be provided."
+  type        = bool
+  default     = true
+}
+
 variable "existing_cluster_iam_role_arn" {
-  description = "ARN of an existing IAM role to use for the EKS cluster. If not provided, a new role will be created."
+  description = "ARN of an existing IAM role to use for the EKS cluster. Required when create_cluster_iam_role is false."
   type        = string
   default     = null
+  validation {
+    condition     = var.create_iam_roles || var.existing_cluster_iam_role_arn != null
+    error_message = "When 'create_iam_roles' is false, 'existing_cluster_iam_role_arn' must be provided."
+  }
 }
 
 variable "existing_node_iam_role_arn" {
-  description = "ARN of an existing IAM role to use for the EKS node groups. If not provided, a new role will be created."
+  description = "ARN of an existing IAM role to use for the EKS node groups. Required when create_iam_roles is false."
   type        = string
   default     = null
+  validation {
+    condition     = var.create_iam_roles || var.existing_node_iam_role_arn != null
+    error_message = "When 'create_iam_roles' is false, 'existing_node_iam_role_arn' must be provided."
+  }
 }
 
 variable "iam_role_permissions_boundary" {

@@ -51,8 +51,8 @@ output "node_groups" {
 # Networking
 ################################################################################
 output "vpc_id" {
-  description = "The ID of the created VPC (null if using existing VPC)"
-  value       = one(module.vpc[*].vpc_id)
+  description = "The ID of the VPC used by the EKS cluster"
+  value       = var.create_vpc ? one(module.vpc[*].vpc_id) : var.existing_vpc_id
 }
 
 output "private_subnet_ids" {
@@ -77,7 +77,7 @@ output "cluster_iam_role_arn" {
 
 output "node_iam_role_arn" {
   description = "IAM role ARN used by EKS node groups"
-  value       = var.existing_node_iam_role_arn != null ? var.existing_node_iam_role_arn : one(module.iam[*].node_iam_role_arn)
+  value       = local.node_iam_role_arn
 }
 
 ################################################################################

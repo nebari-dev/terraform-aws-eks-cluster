@@ -11,9 +11,9 @@ module "vpc" {
   private_subnets = local.private_subnets
   public_subnets  = local.public_subnets
 
-  private_subnet_tags = { "kubernetes.io/role/internal-elb" = "1", "Type" = "private" }
-  public_subnet_tags  = { "kubernetes.io/role/elb" = "1", "Type" = "public" }
-
+  private_subnet_tags = { "kubernetes.io/role/internal-elb" = "1" }
+  public_subnet_tags  = { "kubernetes.io/role/elb" = "1" }
+  
   enable_nat_gateway     = true
   single_nat_gateway     = false
   one_nat_gateway_per_az = true
@@ -31,7 +31,7 @@ module "vpc" {
 module "iam" {
   source = "./modules/iam"
 
-  count = var.existing_node_iam_role_arn == null ? 1 : 0
+  create = var.create_iam_roles
 
   cluster_name         = var.project_name
   permissions_boundary = var.iam_role_permissions_boundary
@@ -57,21 +57,20 @@ module "eks" {
   }
 
   # Use existing security group if provided or have EKS create one otherwise
-  create_security_group = var.existing_security_group_id == null
+  create_security_group = var.create_security_group
   security_group_id     = var.existing_security_group_id
 
-  # This is the VPC ID where the security group will be provisioned. If an existing security
-  # group is provided, it does not have any effect.
-  vpc_id = one(module.vpc[*].vpc_id)
+  # VPC ID is either from the created VPC module or from the existing VPC
+  vpc_id = var.create_vpc ? one(module.vpc[*].vpc_id) : var.existing_vpc_id
 
   subnet_ids              = local.private_subnet_ids
   endpoint_private_access = var.endpoint_private_access
   endpoint_public_access  = var.endpoint_public_access
 
   # Use existing cluster IAM role if provided or have the module create one otherwise
-  create_iam_role               = var.existing_cluster_iam_role_arn == null
+  create_iam_role               = var.create_iam_roles
   iam_role_arn                  = var.existing_cluster_iam_role_arn
-  iam_role_name                 = var.existing_cluster_iam_role_arn == null ? "${var.project_name}-cluster-role" : null
+  iam_role_name                 = var.create_iam_roles ? "${var.project_name}-cluster-role" : null
   iam_role_description          = "EKS cluster role for ${var.project_name}"
   iam_role_permissions_boundary = var.iam_role_permissions_boundary
 
