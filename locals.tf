@@ -67,6 +67,9 @@ locals {
       create_iam_role = false
       iam_role_arn    = local.node_iam_role_arn
 
+      # Attach the VPC endpoints security group to allow nodes to communicate with VPC endpoints
+      vpc_security_group_ids = var.create_vpc ? [one(module.vpc_endpoints[*].security_group_id)] : []
+
       labels = config.labels
 
       # The EKS module expects taints as a map

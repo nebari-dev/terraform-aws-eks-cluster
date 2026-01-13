@@ -8,11 +8,6 @@ variable "subnet_ids" {
   type        = list(string)
 }
 
-variable "security_group_ids" {
-  description = "List of security group IDs for interface VPC endpoints."
-  type        = list(string)
-}
-
 variable "route_table_ids" {
   description = "List of route table IDs for gateway VPC endpoints."
   type        = list(string)

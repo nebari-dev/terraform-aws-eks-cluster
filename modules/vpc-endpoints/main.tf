@@ -5,6 +5,23 @@ data "aws_vpc_endpoint_service" "interface" {
   service_type = "Interface"
 }
 
+resource "aws_security_group" "vpc_endpoints" {
+  name        = "${var.vpc_id}-vpc-endpoints-sg"
+  description = "Security group for VPC endpoints in VPC ${var.vpc_id}"
+  vpc_id      = var.vpc_id
+
+  tags = var.tags
+}
+
+resource "aws_vpc_security_group_ingress_rule" "vpc_endpoints_https" {
+  security_group_id            = aws_security_group.vpc_endpoints.id
+  referenced_security_group_id = aws_security_group.vpc_endpoints.id
+  from_port                    = 443
+  to_port                      = 443
+  ip_protocol                  = "tcp"
+  description                  = "Allow HTTPS traffic from the same security group"
+}
+
 resource "aws_vpc_endpoint" "interface" {
   for_each = data.aws_vpc_endpoint_service.interface
 
@@ -12,7 +29,7 @@ resource "aws_vpc_endpoint" "interface" {
   service_name        = each.value.service_name
   vpc_endpoint_type   = "Interface"
   subnet_ids          = var.subnet_ids
-  security_group_ids  = var.security_group_ids
+  security_group_ids  = [aws_security_group.vpc_endpoints.id]
   private_dns_enabled = true
 
   tags = var.tags
