@@ -45,6 +45,17 @@ module "eks" {
   name               = var.project_name
   kubernetes_version = var.kubernetes_version
 
+  addons = {
+    coredns = {}
+    eks-pod-identity-agent = {
+      before_compute = true
+    }
+    kube-proxy = {}
+    vpc-cni = {
+      before_compute = true
+    }
+  }
+
   # Use existing security group if provided or have EKS create one otherwise
   create_security_group = var.existing_security_group_id == null
   security_group_id     = var.existing_security_group_id
