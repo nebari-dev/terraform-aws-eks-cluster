@@ -4,9 +4,9 @@ module "cluster" {
   project_name = "cluster-complete"
 
   # VPC configuration
-  create_vpc           = true
-  availability_zones   = ["us-west-2a", "us-west-2b", "us-west-2c"]
-  vpc_cidr_block       = "10.10.0.0/16"
+  create_vpc         = true
+  availability_zones = ["us-west-2a", "us-west-2b", "us-west-2c"]
+  vpc_cidr_block     = "10.10.0.0/16"
 
   # Cluster configuration
   kubernetes_version        = "1.34"
