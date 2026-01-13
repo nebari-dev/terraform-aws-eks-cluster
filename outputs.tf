@@ -42,6 +42,11 @@ output "oidc_provider_arn" {
   value       = module.eks.oidc_provider_arn
 }
 
+output "node_groups" {
+  description = "Outputs from EKS node groups"
+  value       = module.eks.eks_managed_node_groups
+}
+
 ################################################################################
 # Networking
 ################################################################################
@@ -60,6 +65,11 @@ output "public_subnet_ids" {
   value       = flatten(module.vpc[*].public_subnets)
 }
 
+output "vpc_endpoints_security_group_id" {
+  description = "Security group ID used by VPC endpoints (null if VPC endpoints not created)"
+  value       = one(module.vpc_endpoints[*].security_group_id)
+}
+
 output "cluster_iam_role_arn" {
   description = "IAM role ARN of the EKS cluster"
   value       = module.eks.cluster_iam_role_arn
@@ -68,11 +78,6 @@ output "cluster_iam_role_arn" {
 output "node_iam_role_arn" {
   description = "IAM role ARN used by EKS node groups"
   value       = var.existing_node_iam_role_arn != null ? var.existing_node_iam_role_arn : one(module.iam[*].node_iam_role_arn)
-}
-
-output "node_groups" {
-  description = "Outputs from EKS node groups"
-  value       = module.eks.eks_managed_node_groups
 }
 
 ################################################################################
