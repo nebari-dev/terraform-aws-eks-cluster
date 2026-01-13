@@ -41,9 +41,16 @@ locals {
 
   # Cluster security group is the one automatically created by EKS unless an existing
   # one is provided.
-  cluster_security_group_id = var.existing_security_group_id != null ? var.existing_security_group_id : module.eks.cluster_primary_security_group_id
+  cluster_security_group_id = var.create_security_group ? module.eks.cluster_primary_security_group_id : var.existing_security_group_id
 
-  node_iam_role_arn = var.existing_node_iam_role_arn != null ? var.existing_node_iam_role_arn : one(module.iam[*].node_iam_role_arn)
+  node_iam_role_arn = var.create_iam_roles ? module.iam.node_iam_role_arn : var.existing_node_iam_role_arn
+
+  # Additional security groups to attach to node groups, depending on whether VPC endpoints 
+  # are created and whether an existing security group is provided
+  additional_node_security_group_ids = compact([
+    one(module.vpc_endpoints[*].security_group_id),
+    var.existing_security_group_id,
+  ])
 
   # Map node groups to the format expected by the EKS module
   node_groups = {
@@ -67,8 +74,7 @@ locals {
       create_iam_role = false
       iam_role_arn    = local.node_iam_role_arn
 
-      # Attach the VPC endpoints security group to allow nodes to communicate with VPC endpoints
-      vpc_security_group_ids = var.create_vpc ? [one(module.vpc_endpoints[*].security_group_id)] : []
+      vpc_security_group_ids = local.additional_node_security_group_ids
 
       labels = config.labels
 
