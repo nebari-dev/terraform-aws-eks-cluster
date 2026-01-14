@@ -27,6 +27,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-region: us-west-2
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: gha-terraform-aws-eks-cluster
+
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v1
         with:
