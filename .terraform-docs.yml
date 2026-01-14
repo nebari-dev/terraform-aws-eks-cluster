@@ -19,16 +19,15 @@ content: |-
   ## Usage
 
   ```hcl
-  module "eks" {
-    source = "nebari-dev/terraform-aws-eks-cluster"
+  module "cluster" {
+    source = "github.com/nebari-dev/terraform-aws-eks-cluster"
 
-    project_name = "cluster-complete"
+    project_name = "eks-cluster"
 
     # VPC configuration
-    create_vpc           = true
-    availability_zones   = ["us-west-2a", "us-west-2b", "us-west-2c"]
-    vpc_cidr_block       = "10.10.0.0/16"
-    create_vpc_endpoints = true
+    create_vpc         = true
+    availability_zones = ["us-west-2a", "us-west-2b", "us-west-2c"]
+    vpc_cidr_block     = "10.10.0.0/16"
 
     # Cluster configuration
     kubernetes_version        = "1.34"
@@ -41,23 +40,20 @@ content: |-
         min_nodes = 1
         max_nodes = 5
         disk_size = 100
-      }
-      gpu = {
-        instance  = "g4dn.xlarge"
-        min_nodes = 0
-        max_nodes = 3
-        gpu       = true
-        taints = [{
-          key    = "nvidia.com/gpu"
-          value  = "true"
-          effect = "NO_SCHEDULE"
-        }]
+        labels = {
+          role = "general"
+        }
       }
       worker = {
         instance  = "t3.medium"
         spot      = true
         min_nodes = 1
         max_nodes = 6
+        taints = [{
+          key    = "dedicated"
+          value  = "batch-jobs"
+          effect = "NO_SCHEDULE"
+        }]
       }
     }
 
@@ -68,7 +64,7 @@ content: |-
     efs_encrypted        = true
 
     tags = {
-      Example = "cluster-complete"
+      Example = "eks-cluster"
       Project = "terraform-aws-eks-cluster"
     }
   }

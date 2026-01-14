@@ -10,16 +10,15 @@ The following section contains auto-generated documentation for this Terraform m
 ## Usage
 
 ```hcl
-module "eks" {
-  source = "nebari-dev/terraform-aws-eks-cluster"
+module "cluster" {
+  source = "github.com/nebari-dev/terraform-aws-eks-cluster"
 
-  project_name = "cluster-complete"
+  project_name = "eks-cluster"
 
   # VPC configuration
-  create_vpc           = true
-  availability_zones   = ["us-west-2a", "us-west-2b", "us-west-2c"]
-  vpc_cidr_block       = "10.10.0.0/16"
-  create_vpc_endpoints = true
+  create_vpc         = true
+  availability_zones = ["us-west-2a", "us-west-2b", "us-west-2c"]
+  vpc_cidr_block     = "10.10.0.0/16"
 
   # Cluster configuration
   kubernetes_version        = "1.34"
@@ -32,23 +31,20 @@ module "eks" {
       min_nodes = 1
       max_nodes = 5
       disk_size = 100
-    }
-    gpu = {
-      instance  = "g4dn.xlarge"
-      min_nodes = 0
-      max_nodes = 3
-      gpu       = true
-      taints = [{
-        key    = "nvidia.com/gpu"
-        value  = "true"
-        effect = "NO_SCHEDULE"
-      }]
+      labels = {
+        role = "general"
+      }
     }
     worker = {
       instance  = "t3.medium"
       spot      = true
       min_nodes = 1
       max_nodes = 6
+      taints = [{
+        key    = "dedicated"
+        value  = "batch-jobs"
+        effect = "NO_SCHEDULE"
+      }]
     }
   }
 
@@ -59,7 +55,7 @@ module "eks" {
   efs_encrypted        = true
 
   tags = {
-    Example = "cluster-complete"
+    Example = "eks-cluster"
     Project = "terraform-aws-eks-cluster"
   }
 }
@@ -76,7 +72,7 @@ module "eks" {
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.26.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 6.0 |
 
 ## Modules
 
@@ -101,8 +97,9 @@ module "eks" {
 |------|-------------|------|---------|:--------:|
 | <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | List of availability zones to use. If not specified, automatically selects up to 3 available AZs in the region. | `list(string)` | `[]` | no |
 | <a name="input_cluster_enabled_log_types"></a> [cluster\_enabled\_log\_types](#input\_cluster\_enabled\_log\_types) | List of control plane logging types to enable. Default: ['authenticator']. Valid values: api, audit, authenticator, controllerManager, scheduler | `list(string)` | <pre>[<br/>  "authenticator"<br/>]</pre> | no |
-| <a name="input_create_vpc"></a> [create\_vpc](#input\_create\_vpc) | Whether to create a new VPC. If false, existing private subnet IDs and security group ID must be provided. | `bool` | `true` | no |
-| <a name="input_create_vpc_endpoints"></a> [create\_vpc\_endpoints](#input\_create\_vpc\_endpoints) | Whether to create VPC endpoints for required AWS services. | `bool` | `true` | no |
+| <a name="input_create_iam_roles"></a> [create\_iam\_roles](#input\_create\_iam\_roles) | Whether to create new IAM roles for the EKS cluster and node groups. If false, existing\_cluster\_iam\_role\_arn and existing\_node\_iam\_role\_arn must be provided. | `bool` | `true` | no |
+| <a name="input_create_security_group"></a> [create\_security\_group](#input\_create\_security\_group) | Whether to create a new security group for the EKS cluster. If false, existing\_security\_group\_id must be provided. | `bool` | `true` | no |
+| <a name="input_create_vpc"></a> [create\_vpc](#input\_create\_vpc) | Whether to create a new VPC with subnets. If false, existing private subnet IDs and security group ID must be provided. | `bool` | `true` | no |
 | <a name="input_efs_enabled"></a> [efs\_enabled](#input\_efs\_enabled) | Whether to create an EFS file system for the cluster. | `bool` | `false` | no |
 | <a name="input_efs_encrypted"></a> [efs\_encrypted](#input\_efs\_encrypted) | Whether to enable encryption at rest for the EFS file system. | `bool` | `true` | no |
 | <a name="input_efs_kms_key_arn"></a> [efs\_kms\_key\_arn](#input\_efs\_kms\_key\_arn) | The ARN of the KMS key to use for encryption at rest. | `string` | `null` | no |
@@ -112,10 +109,11 @@ module "eks" {
 | <a name="input_eks_kms_arn"></a> [eks\_kms\_arn](#input\_eks\_kms\_arn) | The ARN of the KMS key to use for encrypting EKS secrets. If not provided, EKS secrets will not be encrypted. | `string` | `null` | no |
 | <a name="input_endpoint_private_access"></a> [endpoint\_private\_access](#input\_endpoint\_private\_access) | Indicates whether the Amazon EKS private API server endpoint is enabled. | `bool` | `true` | no |
 | <a name="input_endpoint_public_access"></a> [endpoint\_public\_access](#input\_endpoint\_public\_access) | Indicates whether the Amazon EKS public API server endpoint is enabled. | `bool` | `false` | no |
-| <a name="input_existing_cluster_iam_role_arn"></a> [existing\_cluster\_iam\_role\_arn](#input\_existing\_cluster\_iam\_role\_arn) | ARN of an existing IAM role to use for the EKS cluster. If not provided, a new role will be created. | `string` | `null` | no |
-| <a name="input_existing_node_iam_role_arn"></a> [existing\_node\_iam\_role\_arn](#input\_existing\_node\_iam\_role\_arn) | ARN of an existing IAM role to use for the EKS node groups. If not provided, a new role will be created. | `string` | `null` | no |
+| <a name="input_existing_cluster_iam_role_arn"></a> [existing\_cluster\_iam\_role\_arn](#input\_existing\_cluster\_iam\_role\_arn) | ARN of an existing IAM role to use for the EKS cluster. Required when create\_cluster\_iam\_role is false. | `string` | `null` | no |
+| <a name="input_existing_node_iam_role_arn"></a> [existing\_node\_iam\_role\_arn](#input\_existing\_node\_iam\_role\_arn) | ARN of an existing IAM role to use for the EKS node groups. Required when create\_iam\_roles is false. | `string` | `null` | no |
 | <a name="input_existing_private_subnet_ids"></a> [existing\_private\_subnet\_ids](#input\_existing\_private\_subnet\_ids) | List of existing private subnet IDs to use if not creating a new VPC. | `list(string)` | `[]` | no |
-| <a name="input_existing_security_group_id"></a> [existing\_security\_group\_id](#input\_existing\_security\_group\_id) | ID of an existing security group to use if not creating a new VPC. | `string` | `null` | no |
+| <a name="input_existing_security_group_id"></a> [existing\_security\_group\_id](#input\_existing\_security\_group\_id) | ID of an existing security group to use. Required when create\_security\_group is false. | `string` | `null` | no |
+| <a name="input_existing_vpc_id"></a> [existing\_vpc\_id](#input\_existing\_vpc\_id) | ID of an existing VPC to use. Required when create\_vpc is false. | `string` | `null` | no |
 | <a name="input_iam_role_permissions_boundary"></a> [iam\_role\_permissions\_boundary](#input\_iam\_role\_permissions\_boundary) | The ARN of the policy that is used to set the permissions boundary for IAM roles created by this module. | `string` | `null` | no |
 | <a name="input_kubernetes_version"></a> [kubernetes\_version](#input\_kubernetes\_version) | Kubernetes `<major>.<minor>` version to use for the EKS cluster (i.e.: `1.33`) | `string` | `null` | no |
 | <a name="input_node_groups"></a> [node\_groups](#input\_node\_groups) | Map of node groups to create. Each node group supports the following attributes:<br/>- instance (required): EC2 instance type (e.g., "m5.xlarge")<br/>- min\_nodes: Minimum number of nodes (default: 0)<br/>- max\_nodes: Maximum number of nodes (default: 1)<br/>- gpu: Set to true for GPU instances (default: false, uses AL2023 NVIDIA AMI)<br/>- ami\_type: Override AMI type (AL2023\_x86\_64\_STANDARD, AL2023\_ARM\_64\_STANDARD, AL2023\_x86\_64\_NVIDIA, etc.)<br/>- spot: Use Spot instances for cost savings (default: false)<br/>- disk\_size: Root disk size in GB (default: 20)<br/>- labels: Map of Kubernetes labels to apply to nodes (default: {})<br/>- taints: List of Kubernetes taints with keys: key, value, effect | <pre>map(object({<br/>    instance  = string<br/>    min_nodes = optional(number, 0)<br/>    max_nodes = optional(number, 1)<br/>    gpu       = optional(bool, false)<br/>    ami_type  = optional(string, null)<br/>    spot      = optional(bool, false)<br/>    disk_size = optional(number, null)<br/>    labels    = optional(map(string), {})<br/>    taints = optional(list(object({<br/>      key    = string<br/>      value  = string<br/>      effect = string # NO_SCHEDULE, NO_EXECUTE, or PREFER_NO_SCHEDULE<br/>    })), [])<br/>  }))</pre> | n/a | yes |
@@ -144,5 +142,6 @@ module "eks" {
 | <a name="output_oidc_provider_arn"></a> [oidc\_provider\_arn](#output\_oidc\_provider\_arn) | ARN of the OIDC Provider for EKS (for IRSA) |
 | <a name="output_private_subnet_ids"></a> [private\_subnet\_ids](#output\_private\_subnet\_ids) | List of IDs of private subnets used by the EKS cluster |
 | <a name="output_public_subnet_ids"></a> [public\_subnet\_ids](#output\_public\_subnet\_ids) | List of IDs of created public subnets (null if using existing subnets) |
-| <a name="output_vpc_id"></a> [vpc\_id](#output\_vpc\_id) | The ID of the created VPC (null if using existing VPC) |
+| <a name="output_vpc_endpoints_security_group_id"></a> [vpc\_endpoints\_security\_group\_id](#output\_vpc\_endpoints\_security\_group\_id) | Security group ID used by VPC endpoints (null if VPC endpoints not created) |
+| <a name="output_vpc_id"></a> [vpc\_id](#output\_vpc\_id) | The ID of the VPC used by the EKS cluster |
 <!-- END_TF_DOCS -->
