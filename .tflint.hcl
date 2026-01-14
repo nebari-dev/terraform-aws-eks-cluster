@@ -1,7 +1,7 @@
-plugin "google" {
-  enabled = true
-  version = "0.27.1"
-  source  = "github.com/terraform-linters/tflint-ruleset-google"
+plugin "aws" {
+    enabled = true
+    version = "0.45.0"
+    source  = "github.com/terraform-linters/tflint-ruleset-aws"
 }
 
 plugin "terraform" {
