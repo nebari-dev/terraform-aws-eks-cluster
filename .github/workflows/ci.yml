@@ -4,14 +4,12 @@ on:
   pull_request:
     paths:
       - "**.tf"
-      - "test/**"
       - ".github/workflows/ci.yml"
   push:
     branches:
       - main
     paths:
       - "**.tf"
-      - "test/**"
       - ".github/workflows/ci.yml"
 
 env:
