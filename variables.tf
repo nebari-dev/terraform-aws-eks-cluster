@@ -7,7 +7,6 @@ variable "project_name" {
   default     = ""
 }
 
-
 variable "tags" {
   description = "A map of tags to add to all resources"
   type        = map(string)
@@ -93,6 +92,12 @@ variable "endpoint_public_access" {
   description = "Indicates whether the Amazon EKS public API server endpoint is enabled."
   type        = bool
   default     = false
+}
+
+variable "endpoint_public_access_cidrs" {
+  description = "List of CIDR blocks which can access the Amazon EKS public API server endpoint."
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
 }
 
 variable "eks_kms_arn" {

@@ -63,9 +63,10 @@ module "eks" {
   # VPC ID is either from the created VPC module or from the existing VPC
   vpc_id = var.create_vpc ? one(module.vpc[*].vpc_id) : var.existing_vpc_id
 
-  subnet_ids              = local.private_subnet_ids
-  endpoint_private_access = var.endpoint_private_access
-  endpoint_public_access  = var.endpoint_public_access
+  subnet_ids                   = local.private_subnet_ids
+  endpoint_private_access      = var.endpoint_private_access
+  endpoint_public_access       = var.endpoint_public_access
+  endpoint_public_access_cidrs = var.endpoint_public_access_cidrs
 
   # Use existing cluster IAM role if provided or have the module create one otherwise
   create_iam_role               = var.create_iam_roles
