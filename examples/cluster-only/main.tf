@@ -44,8 +44,8 @@ module "eks" {
     }
   }
 
-  # Disable EFS
-  efs_enabled = false
+  # Enable EFS
+  efs_enabled = true
 
   tags = {
     Example = "cluster-only"

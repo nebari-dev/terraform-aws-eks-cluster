@@ -137,3 +137,13 @@ resource "aws_vpc_security_group_ingress_rule" "cluster_ingress_coredns_udp" {
   referenced_security_group_id = aws_security_group.cluster.id
   description                  = "Allow CoreDNS UDP traffic"
 }
+
+# Ingress: NFS (required for EFS mount targets)
+resource "aws_vpc_security_group_ingress_rule" "cluster_ingress_nfs" {
+  security_group_id            = aws_security_group.cluster.id
+  from_port                    = 2049
+  to_port                      = 2049
+  ip_protocol                  = "tcp"
+  referenced_security_group_id = aws_security_group.cluster.id
+  description                  = "Allow NFS traffic for EFS"
+}
