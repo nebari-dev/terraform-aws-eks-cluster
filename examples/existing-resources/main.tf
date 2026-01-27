@@ -1,7 +1,7 @@
 module "eks" {
   source = "../.."
 
-  project_name = "cluster-only"
+  project_name = var.project_name
 
   # Use existing VPC and subnets
   create_vpc                  = false

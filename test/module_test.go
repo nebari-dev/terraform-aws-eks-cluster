@@ -3,15 +3,20 @@ package test
 import (
 	"testing"
 
+	"github.com/gruntwork-io/terratest/modules/random"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 )
 
-func TestExampleClusterComplete(t *testing.T) {
+func TestExampleComplete(t *testing.T) {
 	t.Parallel()
 
+	uniqueID := random.UniqueId()
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir:    "../examples/cluster-complete",
+		TerraformDir:    "../examples/complete",
 		TerraformBinary: "tofu",
+		Vars: map[string]any{
+			"project_name": "test-complete-" + uniqueID,
+		},
 	})
 
 	// Make sure to destroy resources at the end of the test, regardless of whether the test passes or fails
@@ -21,12 +26,16 @@ func TestExampleClusterComplete(t *testing.T) {
 	terraform.InitAndApply(t, terraformOptions)
 }
 
-func TestExampleClusterOnly(t *testing.T) {
+func TestExampleExistingResources(t *testing.T) {
 	t.Parallel()
 
+	uniqueID := random.UniqueId()
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir:    "../examples/cluster-only",
+		TerraformDir:    "../examples/existing-resources",
 		TerraformBinary: "tofu",
+		Vars: map[string]any{
+			"project_name": "test-existing-" + uniqueID,
+		},
 	})
 
 	// Make sure to destroy resources at the end of the test, regardless of whether the test passes or fails
