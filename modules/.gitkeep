@@ -1,2 +1,0 @@
-# This file ensures the modules directory is tracked by git
-# Add any submodules here if your terraform module becomes complex enough to warrant them
