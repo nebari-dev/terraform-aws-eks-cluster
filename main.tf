@@ -108,6 +108,8 @@ module "efs" {
   # Create EFS resources only if EFS is enabled
   count = var.efs_enabled ? 1 : 0
 
+  name = "${var.project_name}-efs"
+
   create_security_group = false
   mount_targets         = local.efs_mount_targets
 
