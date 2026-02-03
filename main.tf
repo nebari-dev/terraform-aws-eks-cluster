@@ -76,6 +76,8 @@ module "eks" {
   iam_role_description          = "EKS cluster role for ${var.project_name}"
   iam_role_permissions_boundary = var.iam_role_permissions_boundary
 
+  enable_cluster_creator_admin_permissions = var.enable_cluster_creator_admin_permissions
+
   encryption_config = var.eks_kms_arn != null ? {
     provider_key_arn = var.eks_kms_arn
     resources        = ["secrets"]

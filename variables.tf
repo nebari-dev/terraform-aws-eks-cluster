@@ -151,6 +151,12 @@ variable "iam_role_permissions_boundary" {
   default     = null
 }
 
+variable "enable_cluster_creator_admin_permissions" {
+  description = "Whether to grant admin permissions to the IAM user or role that creates the EKS cluster. This allows the creator to manage the cluster after creation."
+  type        = bool
+  default     = false
+}
+
 variable "node_groups" {
   description = <<-EOT
     Map of node groups to create. Each node group supports the following attributes:
