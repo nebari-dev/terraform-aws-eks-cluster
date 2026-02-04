@@ -38,6 +38,18 @@ module "iam" {
   tags                 = var.tags
 }
 
+module "aws_ebs_csi_pod_identity" {
+  source  = "terraform-aws-modules/eks-pod-identity/aws"
+  version = "2.7.0"
+
+  name = "aws-ebs-csi"
+
+  attach_aws_ebs_csi_policy = true
+
+  tags = var.tags
+}
+
+
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "21.11.0"
@@ -46,6 +58,12 @@ module "eks" {
   kubernetes_version = var.kubernetes_version
 
   addons = {
+    aws-ebs-csi-driver = {
+      pod_identity_association = [{
+        role_arn        = module.aws_ebs_csi_pod_identity.iam_role_arn,
+        service_account = "ebs-csi-controller-sa",
+      }]
+    }
     coredns = {}
     eks-pod-identity-agent = {
       before_compute = true
