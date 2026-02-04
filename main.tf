@@ -38,7 +38,7 @@ module "iam" {
   tags                 = var.tags
 }
 
-module "aws_ebs_csi_pod_identity" {
+module "ebs_csi_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
   version = "2.7.0"
 
@@ -60,7 +60,7 @@ module "eks" {
   addons = {
     aws-ebs-csi-driver = {
       pod_identity_association = [{
-        role_arn        = module.aws_ebs_csi_pod_identity.iam_role_arn,
+        role_arn        = module.ebs_csi_pod_identity.iam_role_arn,
         service_account = "ebs-csi-controller-sa",
       }]
     }
