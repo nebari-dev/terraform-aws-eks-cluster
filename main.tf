@@ -4,6 +4,8 @@ module "vpc" {
 
   count = var.create_vpc ? 1 : 0
 
+  name = var.project_name
+
   cidr = var.vpc_cidr_block
 
   azs             = local.availability_zones
