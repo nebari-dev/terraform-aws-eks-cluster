@@ -60,14 +60,11 @@ locals {
       instance_types = [config.instance]
       capacity_type  = config.spot ? "SPOT" : "ON_DEMAND"
       disk_size      = config.disk_size
+      ami_type       = config.ami_type
 
       min_size     = config.min_nodes
       max_size     = config.max_nodes
       desired_size = config.min_nodes
-
-      ami_type = config.ami_type != null ? config.ami_type : (
-        config.gpu ? "AL2023_x86_64_NVIDIA" : "AL2023_x86_64_STANDARD"
-      )
 
       # Use a shared IAM role for all node groups instead of creating or specifying
       # individual ones

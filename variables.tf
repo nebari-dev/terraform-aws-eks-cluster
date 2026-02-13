@@ -163,7 +163,6 @@ variable "node_groups" {
     - instance (required): EC2 instance type (e.g., "m5.xlarge")
     - min_nodes: Minimum number of nodes (default: 0)
     - max_nodes: Maximum number of nodes (default: 1)
-    - gpu: Set to true for GPU instances (default: false, uses AL2023 NVIDIA AMI)
     - ami_type: Override AMI type (AL2023_x86_64_STANDARD, AL2023_ARM_64_STANDARD, AL2023_x86_64_NVIDIA, etc.)
     - spot: Use Spot instances for cost savings (default: false)
     - disk_size: Root disk size in GB (default: 20)
@@ -174,8 +173,7 @@ variable "node_groups" {
     instance  = string
     min_nodes = optional(number, 0)
     max_nodes = optional(number, 1)
-    gpu       = optional(bool, false)
-    ami_type  = optional(string, null)
+    ami_type  = optional(string, "AL2023_x86_64_STANDARD")
     spot      = optional(bool, false)
     disk_size = optional(number, null)
     labels    = optional(map(string), {})
