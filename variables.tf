@@ -223,12 +223,22 @@ variable "efs_performance_mode" {
   description = "The performance mode of the EFS file system. Default is `generalPurpose`."
   type        = string
   default     = "generalPurpose"
+
+  validation {
+    condition     = contains(["generalPurpose", "maxIO"], var.efs_performance_mode)
+    error_message = "efs_performance_mode must be either 'generalPurpose' or 'maxIO'."
+  }
 }
 
 variable "efs_throughput_mode" {
   description = "The throughput mode of the EFS file system. Default is `bursting`."
   type        = string
   default     = "bursting"
+
+  validation {
+    condition     = contains(["bursting", "provisioned", "elastic"], var.efs_throughput_mode)
+    error_message = "efs_throughput_mode must be one of: 'bursting', 'provisioned', or 'elastic'."
+  }
 }
 
 variable "efs_provisioned_throughput_in_mibps" {
