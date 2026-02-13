@@ -15,7 +15,7 @@ To deploy this example, you need to have [OpenTofu installed](https://opentofu.o
 2. Navigate to the example directory:
 
    ```bash
-   cd terraform-aws-eks-cluster/examples/cluster-complete
+   cd terraform-aws-eks-cluster/examples/complete
    ```
 
 3. Initialize the OpenTofu working directory:
