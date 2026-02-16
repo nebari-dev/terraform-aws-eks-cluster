@@ -126,7 +126,7 @@ variable "create_iam_roles" {
 }
 
 variable "existing_cluster_iam_role_arn" {
-  description = "ARN of an existing IAM role to use for the EKS cluster. Required when create_cluster_iam_role is false."
+  description = "ARN of an existing IAM role to use for the EKS cluster. Required when create_iam_roles is false."
   type        = string
   default     = null
   validation {
