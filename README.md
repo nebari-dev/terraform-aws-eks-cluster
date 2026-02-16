@@ -111,7 +111,7 @@ module "cluster" {
 | <a name="input_endpoint_private_access"></a> [endpoint\_private\_access](#input\_endpoint\_private\_access) | Indicates whether the Amazon EKS private API server endpoint is enabled. | `bool` | `true` | no |
 | <a name="input_endpoint_public_access"></a> [endpoint\_public\_access](#input\_endpoint\_public\_access) | Indicates whether the Amazon EKS public API server endpoint is enabled. | `bool` | `false` | no |
 | <a name="input_endpoint_public_access_cidrs"></a> [endpoint\_public\_access\_cidrs](#input\_endpoint\_public\_access\_cidrs) | List of CIDR blocks which can access the Amazon EKS public API server endpoint. | `list(string)` | <pre>[<br/>  "0.0.0.0/0"<br/>]</pre> | no |
-| <a name="input_existing_cluster_iam_role_arn"></a> [existing\_cluster\_iam\_role\_arn](#input\_existing\_cluster\_iam\_role\_arn) | ARN of an existing IAM role to use for the EKS cluster. Required when create\_cluster\_iam\_role is false. | `string` | `null` | no |
+| <a name="input_existing_cluster_iam_role_arn"></a> [existing\_cluster\_iam\_role\_arn](#input\_existing\_cluster\_iam\_role\_arn) | ARN of an existing IAM role to use for the EKS cluster. Required when create\_iam\_roles is false. | `string` | `null` | no |
 | <a name="input_existing_node_iam_role_arn"></a> [existing\_node\_iam\_role\_arn](#input\_existing\_node\_iam\_role\_arn) | ARN of an existing IAM role to use for the EKS node groups. Required when create\_iam\_roles is false. | `string` | `null` | no |
 | <a name="input_existing_private_subnet_ids"></a> [existing\_private\_subnet\_ids](#input\_existing\_private\_subnet\_ids) | List of existing private subnet IDs to use if not creating a new VPC. | `list(string)` | `[]` | no |
 | <a name="input_existing_security_group_id"></a> [existing\_security\_group\_id](#input\_existing\_security\_group\_id) | ID of an existing security group to use. Required when create\_security\_group is false. | `string` | `null` | no |
@@ -143,7 +143,7 @@ module "cluster" {
 | <a name="output_node_iam_role_arn"></a> [node\_iam\_role\_arn](#output\_node\_iam\_role\_arn) | IAM role ARN used by EKS node groups |
 | <a name="output_oidc_provider_arn"></a> [oidc\_provider\_arn](#output\_oidc\_provider\_arn) | ARN of the OIDC Provider for EKS (for IRSA) |
 | <a name="output_private_subnet_ids"></a> [private\_subnet\_ids](#output\_private\_subnet\_ids) | List of IDs of private subnets used by the EKS cluster |
-| <a name="output_public_subnet_ids"></a> [public\_subnet\_ids](#output\_public\_subnet\_ids) | List of IDs of created public subnets (null if using existing subnets) |
+| <a name="output_public_subnet_ids"></a> [public\_subnet\_ids](#output\_public\_subnet\_ids) | List of IDs of created public subnets (empty list if using existing subnets) |
 | <a name="output_vpc_endpoints_security_group_id"></a> [vpc\_endpoints\_security\_group\_id](#output\_vpc\_endpoints\_security\_group\_id) | Security group ID used by VPC endpoints (null if VPC endpoints not created) |
 | <a name="output_vpc_id"></a> [vpc\_id](#output\_vpc\_id) | The ID of the VPC used by the EKS cluster |
 <!-- END_TF_DOCS -->
