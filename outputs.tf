@@ -61,7 +61,7 @@ output "private_subnet_ids" {
 }
 
 output "public_subnet_ids" {
-  description = "List of IDs of created public subnets (null if using existing subnets)"
+  description = "List of IDs of created public subnets (empty list if using existing subnets)"
   value       = flatten(module.vpc[*].public_subnets)
 }
 
