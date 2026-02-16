@@ -43,7 +43,7 @@ module "cluster" {
   efs_encrypted        = true
 
   tags = {
-    Example = "cluster-complete"
+    Example = "cluster"
     Project = "terraform-aws-eks-cluster"
   }
 }

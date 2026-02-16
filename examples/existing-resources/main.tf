@@ -48,7 +48,7 @@ module "eks" {
   efs_enabled = true
 
   tags = {
-    Example = "cluster-only"
+    Example = "existing-resources"
     Project = "terraform-aws-eks-cluster"
   }
 }
