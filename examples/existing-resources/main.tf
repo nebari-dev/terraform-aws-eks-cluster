@@ -18,9 +18,10 @@ module "eks" {
   existing_node_iam_role_arn    = aws_iam_role.node.arn
 
   # Cluster configuration
-  kubernetes_version      = "1.34"
-  endpoint_private_access = true
-  endpoint_public_access  = false
+  kubernetes_version                       = "1.34"
+  endpoint_private_access                  = true
+  endpoint_public_access                   = true
+  enable_cluster_creator_admin_permissions = true
   node_groups = {
     general = {
       instance  = "m6i.large"
