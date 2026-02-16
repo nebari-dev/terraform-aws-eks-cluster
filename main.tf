@@ -96,6 +96,8 @@ module "vpc_endpoints" {
 
   count = var.create_vpc ? 1 : 0
 
+  project_name = var.project_name
+
   vpc_id          = one(module.vpc[*].vpc_id)
   subnet_ids      = flatten(module.vpc[*].private_subnets)
   route_table_ids = concat(flatten(module.vpc[*].public_route_table_ids), flatten(module.vpc[*].private_route_table_ids))
