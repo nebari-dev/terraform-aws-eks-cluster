@@ -60,7 +60,7 @@ module "eks" {
     aws-ebs-csi-driver = {
       pod_identity_association = [{
         role_arn        = module.ebs_csi_pod_identity.iam_role_arn,
-        service_account = "ebs-csi-controller-sa",
+        service_account = "ebs-csi-controller-sa"
       }]
     }
     coredns = {}
