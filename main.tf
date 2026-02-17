@@ -49,7 +49,6 @@ module "ebs_csi_pod_identity" {
   tags = var.tags
 }
 
-
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "21.11.0"
