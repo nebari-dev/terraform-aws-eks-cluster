@@ -42,7 +42,7 @@ module "ebs_csi_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
   version = "2.7.0"
 
-  name = "aws-ebs-csi"
+  name = "${var.project_name}-aws-ebs-csi"
 
   attach_aws_ebs_csi_policy = true
 
