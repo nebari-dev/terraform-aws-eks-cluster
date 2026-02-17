@@ -60,7 +60,7 @@ func testEBSCSIDriver(t *testing.T, kubectlOptions *k8s.KubectlOptions) {
 	// Wait for the PVC to be bound, confirming EBS volume provisioning
 	bound := corev1.ClaimBound
 	k8s.WaitUntilPersistentVolumeClaimInStatus(t, nsOptions, "ebs-csi-test-pvc", &bound, waitRetries, waitInterval)
-	
+
 	// Wait for the pod to be ready, confirming volume attachment and mount
 	k8s.WaitUntilPodAvailable(t, nsOptions, "ebs-csi-test-pod", waitRetries, waitInterval)
 }
@@ -99,6 +99,10 @@ func TestExampleExistingResources(t *testing.T) {
 		TerraformBinary: "tofu",
 		Vars: map[string]any{
 			"project_name": "test-existing-" + uniqueID,
+			// Make sure to override the existing cluster access settings from the example
+			// so the test can connect to the cluster and run k8s commands.
+			"endpoint_public_access":                   true,
+			"enable_cluster_creator_admin_permissions": true,
 		},
 	})
 
