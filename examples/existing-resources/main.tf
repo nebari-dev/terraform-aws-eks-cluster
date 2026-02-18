@@ -1,7 +1,7 @@
-module "eks" {
+module "cluster" {
   source = "../.."
 
-  project_name = var.project_name
+  project_name = "ex-existing-resources"
 
   # Use existing VPC and subnets
   create_vpc                  = false

@@ -1,7 +1,7 @@
 module "cluster" {
   source = "../.."
 
-  project_name = var.project_name
+  project_name = "ex-complete"
 
   # VPC configuration
   create_vpc         = true
