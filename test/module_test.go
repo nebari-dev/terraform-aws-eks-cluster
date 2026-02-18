@@ -1,6 +1,8 @@
 package test
 
 import (
+	"encoding/json"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -17,6 +19,40 @@ const (
 	waitRetries  = 30
 	waitInterval = 10 * time.Second
 )
+
+// writeTestOverride writes a Terraform JSON override file into an example directory
+// and registers a cleanup to remove it when the test ends. The override file uses
+// Terraform's override mechanism to change values that are intentionally hardcoded
+// in the examples and that are needed for the tests to run.
+func writeTestOverride(t *testing.T, exampleDir, projectName string) {
+	t.Helper()
+
+	overrides := map[string]any{
+		"module": map[string]any{
+			"cluster": map[string]any{
+				// Use a unique project name to avoid name collision in the same AWS account
+				"project_name": projectName,
+				// The endpoint public access and the admin permissions are enabled so
+				// the tests can run k8s commands against the cluster, regardless of the
+				// values set in the examples.
+				"endpoint_public_access":                   true,
+				"enable_cluster_creator_admin_permissions": true,
+			},
+		},
+	}
+
+	data, err := json.MarshalIndent(overrides, "", "  ")
+	if err != nil {
+		t.Fatalf("failed to marshal test override: %v", err)
+	}
+
+	dst := filepath.Join(exampleDir, "test_override.tf.json")
+	if err := os.WriteFile(dst, data, 0600); err != nil {
+		t.Fatalf("failed to write test override: %v", err)
+	}
+
+	t.Cleanup(func() { os.Remove(dst) })
+}
 
 // configureKubectl sets up a dedicated kubeconfig for the deployed cluster.
 func configureKubectl(t *testing.T, terraformOptions *terraform.Options) *k8s.KubectlOptions {
@@ -68,13 +104,13 @@ func testEBSCSIDriver(t *testing.T, kubectlOptions *k8s.KubectlOptions) {
 func TestExampleComplete(t *testing.T) {
 	t.Parallel()
 
-	uniqueID := random.UniqueId()
+	exampleFolder := "../examples/complete"
+	randomProjectName := "test-complete-" + random.UniqueId()
+	writeTestOverride(t, exampleFolder, randomProjectName)
+
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir:    "../examples/complete",
+		TerraformDir:    exampleFolder,
 		TerraformBinary: "tofu",
-		Vars: map[string]any{
-			"project_name": "test-complete-" + uniqueID,
-		},
 	})
 
 	// Make sure to destroy resources at the end of the test, regardless of whether the test passes or fails
@@ -93,17 +129,13 @@ func TestExampleComplete(t *testing.T) {
 func TestExampleExistingResources(t *testing.T) {
 	t.Parallel()
 
-	uniqueID := random.UniqueId()
+	exampleFolder := "../examples/existing-resources"
+	randomProjectName := "test-existing-" + random.UniqueId()
+	writeTestOverride(t, exampleFolder, randomProjectName)
+
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir:    "../examples/existing-resources",
+		TerraformDir:    exampleFolder,
 		TerraformBinary: "tofu",
-		Vars: map[string]any{
-			"project_name": "test-existing-" + uniqueID,
-			// Make sure to override the existing cluster access settings from the example
-			// so the test can connect to the cluster and run k8s commands.
-			"endpoint_public_access":                   true,
-			"enable_cluster_creator_admin_permissions": true,
-		},
 	})
 
 	// Make sure to destroy resources at the end of the test, regardless of whether the test passes or fails
