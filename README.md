@@ -78,6 +78,7 @@ module "cluster" {
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_ebs_csi_pod_identity"></a> [ebs\_csi\_pod\_identity](#module\_ebs\_csi\_pod\_identity) | terraform-aws-modules/eks-pod-identity/aws | 2.7.0 |
 | <a name="module_efs"></a> [efs](#module\_efs) | terraform-aws-modules/efs/aws | 2.0.0 |
 | <a name="module_eks"></a> [eks](#module\_eks) | terraform-aws-modules/eks/aws | 21.11.0 |
 | <a name="module_iam"></a> [iam](#module\_iam) | ./modules/iam | n/a |

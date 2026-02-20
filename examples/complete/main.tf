@@ -1,7 +1,7 @@
 module "cluster" {
   source = "../.."
 
-  project_name = var.project_name
+  project_name = "ex-complete"
 
   # VPC configuration
   create_vpc         = true
@@ -9,10 +9,11 @@ module "cluster" {
   vpc_cidr_block     = "10.10.0.0/16"
 
   # Cluster configuration
-  kubernetes_version        = "1.34"
-  endpoint_private_access   = true
-  endpoint_public_access    = true
-  cluster_enabled_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  kubernetes_version                       = "1.34"
+  endpoint_private_access                  = true
+  endpoint_public_access                   = true
+  enable_cluster_creator_admin_permissions = true
+  cluster_enabled_log_types                = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
   node_groups = {
     general = {
       instance  = "m6i.large"
