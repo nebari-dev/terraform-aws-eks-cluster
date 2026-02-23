@@ -43,6 +43,26 @@ module "cluster" {
   efs_throughput_mode  = "elastic"
   efs_encrypted        = true
 
+  # Node security group rules
+  node_security_group_additional_rules = {
+    longhorn_webhook_admission = {
+      description                   = "Cluster API to Longhorn admission webhook"
+      protocol                      = "tcp"
+      from_port                     = 9502
+      to_port                       = 9502
+      type                          = "ingress"
+      source_cluster_security_group = true
+    }
+    longhorn_webhook_conversion = {
+      description                   = "Cluster API to Longhorn conversion webhook"
+      protocol                      = "tcp"
+      from_port                     = 9501
+      to_port                       = 9501
+      type                          = "ingress"
+      source_cluster_security_group = true
+    }
+  }
+
   tags = {
     Example = "cluster"
     Project = "terraform-aws-eks-cluster"
