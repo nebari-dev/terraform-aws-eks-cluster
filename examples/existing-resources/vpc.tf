@@ -1,7 +1,3 @@
-locals {
-  project_name = "ex-existing-resources"
-}
-
 data "aws_availability_zones" "available" {
   state = "available"
 }
@@ -13,7 +9,7 @@ resource "aws_vpc" "main" {
   enable_dns_support   = true
 
   tags = {
-    Name = local.project_name
+    Name = var.project_name
   }
 }
 
@@ -21,7 +17,7 @@ resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 
   tags = {
-    Name = local.project_name
+    Name = var.project_name
   }
 }
 
@@ -34,7 +30,7 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name                     = "${local.project_name}-public-${data.aws_availability_zones.available.names[count.index]}"
+    Name                     = "${var.project_name}-public-${data.aws_availability_zones.available.names[count.index]}"
     "kubernetes.io/role/elb" = "1"
   }
 }
@@ -47,7 +43,7 @@ resource "aws_subnet" "private" {
   availability_zone = data.aws_availability_zones.available.names[count.index]
 
   tags = {
-    Name                              = "${local.project_name}-private-${data.aws_availability_zones.available.names[count.index]}"
+    Name                              = "${var.project_name}-private-${data.aws_availability_zones.available.names[count.index]}"
     "kubernetes.io/role/internal-elb" = "1"
   }
 }
@@ -57,7 +53,7 @@ resource "aws_eip" "nat" {
   domain = "vpc"
 
   tags = {
-    Name = "${local.project_name}-${data.aws_availability_zones.available.names[0]}"
+    Name = "${var.project_name}-${data.aws_availability_zones.available.names[0]}"
   }
 
   depends_on = [aws_internet_gateway.main]
@@ -69,7 +65,7 @@ resource "aws_nat_gateway" "main" {
   subnet_id     = aws_subnet.public[0].id
 
   tags = {
-    Name = "${local.project_name}-${data.aws_availability_zones.available.names[0]}"
+    Name = "${var.project_name}-${data.aws_availability_zones.available.names[0]}"
   }
 
   depends_on = [aws_internet_gateway.main]
@@ -85,7 +81,7 @@ resource "aws_route_table" "public" {
   }
 
   tags = {
-    Name = "${local.project_name}-public"
+    Name = "${var.project_name}-public"
   }
 }
 
@@ -106,7 +102,7 @@ resource "aws_route_table" "private" {
   }
 
   tags = {
-    Name = "${local.project_name}-private"
+    Name = "${var.project_name}-private"
   }
 }
 
