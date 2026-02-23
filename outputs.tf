@@ -47,6 +47,11 @@ output "node_groups" {
   value       = module.eks.eks_managed_node_groups
 }
 
+output "node_security_group_id" {
+  description = "ID of the node shared security group"
+  value       = module.eks.node_security_group_id
+}
+
 ################################################################################
 # Networking
 ################################################################################
