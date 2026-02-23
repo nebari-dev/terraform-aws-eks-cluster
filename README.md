@@ -54,6 +54,28 @@ module "cluster" {
   efs_throughput_mode  = "elastic"
   efs_encrypted        = true
 
+  # Node security group rules
+  # Open ports for Longhorn admission (9502) and conversion (9501) webhooks
+  # so the EKS control plane can reach them on the nodes.
+  node_security_group_additional_rules = {
+    longhorn_webhook_admission = {
+      description                   = "Cluster API to Longhorn admission webhook"
+      protocol                      = "tcp"
+      from_port                     = 9502
+      to_port                       = 9502
+      type                          = "ingress"
+      source_cluster_security_group = true
+    }
+    longhorn_webhook_conversion = {
+      description                   = "Cluster API to Longhorn conversion webhook"
+      protocol                      = "tcp"
+      from_port                     = 9501
+      to_port                       = 9501
+      type                          = "ingress"
+      source_cluster_security_group = true
+    }
+  }
+
   tags = {
     Example = "eks-cluster"
     Project = "terraform-aws-eks-cluster"
@@ -120,6 +142,7 @@ module "cluster" {
 | <a name="input_iam_role_permissions_boundary"></a> [iam\_role\_permissions\_boundary](#input\_iam\_role\_permissions\_boundary) | The ARN of the policy that is used to set the permissions boundary for IAM roles created by this module. | `string` | `null` | no |
 | <a name="input_kubernetes_version"></a> [kubernetes\_version](#input\_kubernetes\_version) | Kubernetes `<major>.<minor>` version to use for the EKS cluster (i.e.: `1.33`) | `string` | `null` | no |
 | <a name="input_node_groups"></a> [node\_groups](#input\_node\_groups) | Map of node groups to create. Each node group supports the following attributes:<br/>- instance (required): EC2 instance type (e.g., "m5.xlarge")<br/>- min\_nodes: Minimum number of nodes (default: 0)<br/>- max\_nodes: Maximum number of nodes (default: 1)<br/>- ami\_type: Override AMI type (AL2023\_x86\_64\_STANDARD, AL2023\_ARM\_64\_STANDARD, AL2023\_x86\_64\_NVIDIA, etc.)<br/>- spot: Use Spot instances for cost savings (default: false)<br/>- disk\_size: Root disk size in GB (default: 20)<br/>- labels: Map of Kubernetes labels to apply to nodes (default: {})<br/>- taints: List of Kubernetes taints with keys: key, value, effect | <pre>map(object({<br/>    instance  = string<br/>    min_nodes = optional(number, 0)<br/>    max_nodes = optional(number, 1)<br/>    ami_type  = optional(string, "AL2023_x86_64_STANDARD")<br/>    spot      = optional(bool, false)<br/>    disk_size = optional(number, null)<br/>    labels    = optional(map(string), {})<br/>    taints = optional(list(object({<br/>      key    = string<br/>      value  = string<br/>      effect = string # NO_SCHEDULE, NO_EXECUTE, or PREFER_NO_SCHEDULE<br/>    })), [])<br/>  }))</pre> | n/a | yes |
+| <a name="input_node_security_group_additional_rules"></a> [node\_security\_group\_additional\_rules](#input\_node\_security\_group\_additional\_rules) | Additional security group rules to add to the node security group created by the EKS module. Set source\_cluster\_security\_group = true to allow traffic from the cluster security group. | `any` | `{}` | no |
 | <a name="input_project_name"></a> [project\_name](#input\_project\_name) | The name of the project. | `string` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to add to all resources | `map(string)` | `{}` | no |
 | <a name="input_vpc_cidr_block"></a> [vpc\_cidr\_block](#input\_vpc\_cidr\_block) | The CIDR block for the VPC. | `string` | `"10.0.0.0/16"` | no |
@@ -142,6 +165,7 @@ module "cluster" {
 | <a name="output_kubeconfig_command"></a> [kubeconfig\_command](#output\_kubeconfig\_command) | Command to update kubeconfig |
 | <a name="output_node_groups"></a> [node\_groups](#output\_node\_groups) | Outputs from EKS node groups |
 | <a name="output_node_iam_role_arn"></a> [node\_iam\_role\_arn](#output\_node\_iam\_role\_arn) | IAM role ARN used by EKS node groups |
+| <a name="output_node_security_group_id"></a> [node\_security\_group\_id](#output\_node\_security\_group\_id) | ID of the node shared security group |
 | <a name="output_oidc_provider_arn"></a> [oidc\_provider\_arn](#output\_oidc\_provider\_arn) | ARN of the OIDC Provider for EKS (for IRSA) |
 | <a name="output_private_subnet_ids"></a> [private\_subnet\_ids](#output\_private\_subnet\_ids) | List of IDs of private subnets used by the EKS cluster |
 | <a name="output_public_subnet_ids"></a> [public\_subnet\_ids](#output\_public\_subnet\_ids) | List of IDs of created public subnets (empty list if using existing subnets) |
