@@ -24,14 +24,12 @@ const (
 // and registers a cleanup to remove it when the test ends. The override file uses
 // Terraform's override mechanism to change values that are intentionally hardcoded
 // in the examples and that are needed for the tests to run.
-func writeTestOverride(t *testing.T, exampleDir, projectName string) {
+func writeTestOverride(t *testing.T, exampleDir string) {
 	t.Helper()
 
 	overrides := map[string]any{
 		"module": map[string]any{
 			"cluster": map[string]any{
-				// Use a unique project name to avoid name collision in the same AWS account
-				"project_name": projectName,
 				// The endpoint public access and the admin permissions are enabled so
 				// the tests can run k8s commands against the cluster, regardless of the
 				// values set in the examples.
@@ -105,12 +103,14 @@ func TestExampleComplete(t *testing.T) {
 	t.Parallel()
 
 	exampleFolder := "../examples/complete"
-	randomProjectName := "test-complete-" + random.UniqueId()
-	writeTestOverride(t, exampleFolder, randomProjectName)
+	writeTestOverride(t, exampleFolder)
 
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir:    exampleFolder,
 		TerraformBinary: "tofu",
+		Vars: map[string]any{
+			"project_name": "test-complete-" + random.UniqueId(),
+		},
 	})
 
 	// Make sure to destroy resources at the end of the test, regardless of whether the test passes or fails
@@ -130,12 +130,14 @@ func TestExampleExistingResources(t *testing.T) {
 	t.Parallel()
 
 	exampleFolder := "../examples/existing-resources"
-	randomProjectName := "test-existing-" + random.UniqueId()
-	writeTestOverride(t, exampleFolder, randomProjectName)
+	writeTestOverride(t, exampleFolder)
 
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir:    exampleFolder,
 		TerraformBinary: "tofu",
+		Vars: map[string]any{
+			"project_name": "test-existing-" + random.UniqueId(),
+		},
 	})
 
 	// Make sure to destroy resources at the end of the test, regardless of whether the test passes or fails

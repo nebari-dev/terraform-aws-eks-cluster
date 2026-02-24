@@ -1,7 +1,7 @@
 module "cluster" {
   source = "../.."
 
-  project_name = "ex-existing-resources"
+  project_name = var.project_name
 
   # Use existing VPC and subnets
   create_vpc                  = false
