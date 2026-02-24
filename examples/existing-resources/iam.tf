@@ -1,6 +1,6 @@
 resource "aws_iam_role" "cluster" {
-  name        = "example-cluster-role"
-  description = "EKS cluster role for cluster-only example"
+  name        = "${var.project_name}-cluster-role"
+  description = "EKS cluster role for the ${var.project_name} project"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -25,8 +25,8 @@ resource "aws_iam_role_policy_attachment" "cluster_amazon_eks_vpc_resource_contr
 }
 
 resource "aws_iam_role" "node" {
-  name        = "example-node-role"
-  description = "EKS node role for cluster-only example"
+  name        = "${var.project_name}-node-role"
+  description = "EKS node role for the ${var.project_name} project"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
