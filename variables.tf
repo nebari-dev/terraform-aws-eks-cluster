@@ -208,6 +208,12 @@ variable "node_groups" {
   }
 }
 
+variable "node_security_group_additional_rules" {
+  description = "Additional security group rules to add to the node security group created by the EKS module. Set source_cluster_security_group = true to allow traffic from the cluster security group."
+  type        = any
+  default     = {}
+}
+
 ################################################################################
 # EFS
 ################################################################################

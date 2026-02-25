@@ -103,6 +103,8 @@ module "eks" {
 
   enabled_log_types = var.cluster_enabled_log_types
 
+  node_security_group_additional_rules = var.node_security_group_additional_rules
+
   eks_managed_node_groups = local.node_groups
 
   tags = var.tags
