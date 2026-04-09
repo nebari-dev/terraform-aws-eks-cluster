@@ -51,6 +51,19 @@ module "ebs_csi_pod_identity" {
   tags = var.tags
 }
 
+module "efs_csi_pod_identity" {
+  source  = "terraform-aws-modules/eks-pod-identity/aws"
+  version = "2.7.0"
+
+  count = var.efs_enabled ? 1 : 0
+
+  name = "${var.project_name}-aws-efs-csi"
+
+  attach_aws_efs_csi_policy = true
+
+  tags = var.tags
+}
+
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "21.11.0"
@@ -58,22 +71,32 @@ module "eks" {
   name               = var.project_name
   kubernetes_version = var.kubernetes_version
 
-  addons = {
-    aws-ebs-csi-driver = {
-      pod_identity_association = [{
-        role_arn        = module.ebs_csi_pod_identity.iam_role_arn,
-        service_account = "ebs-csi-controller-sa"
-      }]
-    }
-    coredns = {}
-    eks-pod-identity-agent = {
-      before_compute = true
-    }
-    kube-proxy = {}
-    vpc-cni = {
-      before_compute = true
-    }
-  }
+  addons = merge(
+    {
+      aws-ebs-csi-driver = {
+        pod_identity_association = [{
+          role_arn        = module.ebs_csi_pod_identity.iam_role_arn,
+          service_account = "ebs-csi-controller-sa"
+        }]
+      }
+      coredns = {}
+      eks-pod-identity-agent = {
+        before_compute = true
+      }
+      kube-proxy = {}
+      vpc-cni = {
+        before_compute = true
+      }
+    },
+    var.efs_enabled ? {
+      aws-efs-csi-driver = {
+        pod_identity_association = [{
+          role_arn        = one(module.efs_csi_pod_identity[*].iam_role_arn)
+          service_account = "efs-csi-controller-sa"
+        }]
+      }
+    } : {}
+  )
 
   # Use existing security group if provided or have EKS create one otherwise
   create_security_group = var.create_security_group

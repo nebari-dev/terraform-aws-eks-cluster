@@ -103,6 +103,11 @@ output "efs_dns_name" {
   value       = one(module.efs[*].dns_name)
 }
 
+output "efs_csi_driver_role_arn" {
+  description = "IAM role ARN for the EFS CSI driver (null if EFS not enabled)"
+  value       = one(module.efs_csi_pod_identity[*].iam_role_arn)
+}
+
 ################################################################################
 # Misc
 ################################################################################
