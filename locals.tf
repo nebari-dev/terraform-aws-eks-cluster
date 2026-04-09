@@ -59,8 +59,21 @@ locals {
 
       instance_types = [config.instance]
       capacity_type  = config.spot ? "SPOT" : "ON_DEMAND"
-      disk_size      = config.disk_size
       ami_type       = config.ami_type
+
+      # disk_size must be set via block_device_mappings because the upstream EKS
+      # module creates a custom launch template by default, which causes the
+      # node group disk_size field to be ignored by the EKS API.
+      block_device_mappings = config.disk_size != null ? {
+        root = {
+          device_name = "/dev/xvda"
+          ebs = {
+            volume_size           = config.disk_size
+            volume_type           = "gp3"
+            delete_on_termination = true
+          }
+        }
+      } : {}
 
       min_size     = config.min_nodes
       max_size     = config.max_nodes
