@@ -24,17 +24,20 @@ locals {
   # with the VPC if existing ones are not provided.
   private_subnet_ids = var.create_vpc ? flatten(module.vpc[*].private_subnets) : var.existing_private_subnet_ids
 
-  interface_vpc_endpoint_services = var.create_vpc ? [
-    "ec2",
-    "ecr.api",
-    "ecr.dkr",
-    "sts",
-    "eks",
-    "eks-auth",
-    "logs",
-    "elasticloadbalancing",
-    "autoscaling",
-  ] : []
+  interface_vpc_endpoint_services = var.create_vpc ? concat(
+    [
+      "ec2",
+      "ecr.api",
+      "ecr.dkr",
+      "sts",
+      "eks",
+      "eks-auth",
+      "logs",
+      "elasticloadbalancing",
+      "autoscaling",
+    ],
+    var.efs_enabled ? ["elasticfilesystem"] : [],
+  ) : []
   gateway_vpc_endpoint_services = var.create_vpc ? [
     "s3",
   ] : []
