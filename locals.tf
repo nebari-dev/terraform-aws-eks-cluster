@@ -89,6 +89,14 @@ locals {
 
       vpc_security_group_ids = local.additional_node_security_group_ids
 
+      # Attach the EKS-managed primary cluster SG to nodes when we own the SG
+      # setup. This SG allows all traffic between its members, which lets EFS
+      # mount targets (attached to the primary SG) accept NFS from nodes
+      # without a standalone rule, and future-proofs any addon that needs
+      # node-to-cluster-SG communication. When create_security_group is false,
+      # users bring their own SG and manage their own rules.
+      attach_cluster_primary_security_group = var.create_security_group
+
       labels = config.labels
 
       # The EKS module expects taints as a map

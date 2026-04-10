@@ -150,22 +150,6 @@ module "vpc_endpoints" {
   tags = var.tags
 }
 
-# Allow NFS traffic from nodes to EFS mount targets. Mount targets use the
-# cluster security group, but nodes use a separate node security group, so
-# without this rule NFS (TCP 2049) is blocked and PVC mounts time out.
-# See: https://github.com/nebari-dev/terraform-aws-eks-cluster/issues/22
-resource "aws_security_group_rule" "efs_nfs_from_nodes" {
-  count = var.efs_enabled ? 1 : 0
-
-  type                     = "ingress"
-  from_port                = 2049
-  to_port                  = 2049
-  protocol                 = "tcp"
-  security_group_id        = local.cluster_security_group_id
-  source_security_group_id = module.eks.node_security_group_id
-  description              = "NFS from EKS nodes to EFS mount targets"
-}
-
 module "efs" {
   source  = "terraform-aws-modules/efs/aws"
   version = "2.0.0"
