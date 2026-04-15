@@ -99,6 +99,39 @@ func testEBSCSIDriver(t *testing.T, kubectlOptions *k8s.KubectlOptions) {
 	k8s.WaitUntilPodAvailable(t, nsOptions, "ebs-csi-test-pod", waitRetries, waitInterval)
 }
 
+// testAWSLoadBalancerController validates that the AWS Load Balancer Controller
+// is installed and able to reconcile a Service of type LoadBalancer into an NLB.
+// It deploys a small echo server, exposes it with the aws-load-balancer-type:
+// external annotation, and waits for the Service to be populated with an LB
+// hostname - which only happens if LBC is running and has the necessary IAM
+// permissions to create an NLB.
+func testAWSLoadBalancerController(t *testing.T, kubectlOptions *k8s.KubectlOptions) {
+	t.Helper()
+
+	fixturesDir, _ := filepath.Abs("fixtures/aws-lbc")
+	deploymentPath := filepath.Join(fixturesDir, "deployment.yaml")
+	servicePath := filepath.Join(fixturesDir, "service.yaml")
+
+	namespace := "aws-lbc-test"
+
+	k8s.CreateNamespace(t, kubectlOptions, namespace)
+	defer k8s.DeleteNamespace(t, kubectlOptions, namespace)
+
+	nsOptions := k8s.NewKubectlOptions(kubectlOptions.ContextName, kubectlOptions.ConfigPath, namespace)
+
+	k8s.KubectlApply(t, nsOptions, deploymentPath)
+	k8s.KubectlApply(t, nsOptions, servicePath)
+
+	// Wait for the LBC webhook + reconciler to provision an NLB and populate
+	// status.loadBalancer.ingress[0].hostname on the Service.
+	k8s.WaitUntilServiceAvailable(t, nsOptions, "aws-lbc-test-echo", waitRetries, waitInterval)
+
+	svc := k8s.GetService(t, nsOptions, "aws-lbc-test-echo")
+	if len(svc.Status.LoadBalancer.Ingress) == 0 || svc.Status.LoadBalancer.Ingress[0].Hostname == "" {
+		t.Fatalf("expected Service to have a LoadBalancer hostname assigned by AWS LBC, got: %+v", svc.Status.LoadBalancer)
+	}
+}
+
 func TestExampleComplete(t *testing.T) {
 	t.Parallel()
 
@@ -123,6 +156,10 @@ func TestExampleComplete(t *testing.T) {
 
 	t.Run("ebs_csi_driver", func(t *testing.T) {
 		testEBSCSIDriver(t, kubectlOptions)
+	})
+
+	t.Run("aws_load_balancer_controller", func(t *testing.T) {
+		testAWSLoadBalancerController(t, kubectlOptions)
 	})
 }
 
