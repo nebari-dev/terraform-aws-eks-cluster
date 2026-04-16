@@ -89,14 +89,12 @@ module "cluster" {
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.0 |
-| <a name="requirement_helm"></a> [helm](#requirement\_helm) | ~> 2.16 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 6.40.0 |
-| <a name="provider_helm"></a> [helm](#provider\_helm) | 2.17.0 |
 
 ## Modules
 
@@ -115,7 +113,6 @@ module "cluster" {
 
 | Name | Type |
 |------|------|
-| [helm_release.aws_load_balancer_controller](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release) | resource |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 
@@ -124,7 +121,6 @@ module "cluster" {
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | List of availability zones to use. If not specified, automatically selects up to 3 available AZs in the region. | `list(string)` | `[]` | no |
-| <a name="input_aws_load_balancer_controller_chart_version"></a> [aws\_load\_balancer\_controller\_chart\_version](#input\_aws\_load\_balancer\_controller\_chart\_version) | Version of the aws-load-balancer-controller Helm chart to install. See https://github.com/aws/eks-charts/releases. | `string` | `"3.2.1"` | no |
 | <a name="input_cluster_enabled_log_types"></a> [cluster\_enabled\_log\_types](#input\_cluster\_enabled\_log\_types) | List of control plane logging types to enable. Default: ['authenticator']. Valid values: api, audit, authenticator, controllerManager, scheduler | `list(string)` | <pre>[<br/>  "authenticator"<br/>]</pre> | no |
 | <a name="input_create_iam_roles"></a> [create\_iam\_roles](#input\_create\_iam\_roles) | Whether to create new IAM roles for the EKS cluster and node groups. If false, existing\_cluster\_iam\_role\_arn and existing\_node\_iam\_role\_arn must be provided. | `bool` | `true` | no |
 | <a name="input_create_security_group"></a> [create\_security\_group](#input\_create\_security\_group) | Whether to create a new security group for the EKS cluster. If false, existing\_security\_group\_id must be provided. | `bool` | `true` | no |
@@ -136,6 +132,7 @@ module "cluster" {
 | <a name="input_efs_provisioned_throughput_in_mibps"></a> [efs\_provisioned\_throughput\_in\_mibps](#input\_efs\_provisioned\_throughput\_in\_mibps) | The provisioned throughput in MiB/s for the EFS file system. Required if throughput\_mode is set to provisioned. | `number` | `null` | no |
 | <a name="input_efs_throughput_mode"></a> [efs\_throughput\_mode](#input\_efs\_throughput\_mode) | The throughput mode of the EFS file system. Default is `bursting`. | `string` | `"bursting"` | no |
 | <a name="input_eks_kms_arn"></a> [eks\_kms\_arn](#input\_eks\_kms\_arn) | The ARN of the KMS key to use for encrypting EKS secrets. If not provided, EKS secrets will not be encrypted. | `string` | `null` | no |
+| <a name="input_enable_aws_load_balancer_controller_pod_identity"></a> [enable\_aws\_load\_balancer\_controller\_pod\_identity](#input\_enable\_aws\_load\_balancer\_controller\_pod\_identity) | Whether to provision the IAM role and EKS Pod Identity association for the AWS Load Balancer Controller. The role is bound to the `aws-load-balancer-controller` service account in `kube-system`. The controller itself is not installed by this module - consumers (e.g., nebari-infrastructure-core) are expected to install the Helm chart after cluster creation. Recommended for all new clusters. | `bool` | `true` | no |
 | <a name="input_enable_cluster_creator_admin_permissions"></a> [enable\_cluster\_creator\_admin\_permissions](#input\_enable\_cluster\_creator\_admin\_permissions) | Whether to grant admin permissions to the IAM user or role that creates the EKS cluster. This allows the creator to manage the cluster after creation. | `bool` | `false` | no |
 | <a name="input_endpoint_private_access"></a> [endpoint\_private\_access](#input\_endpoint\_private\_access) | Indicates whether the Amazon EKS private API server endpoint is enabled. | `bool` | `true` | no |
 | <a name="input_endpoint_public_access"></a> [endpoint\_public\_access](#input\_endpoint\_public\_access) | Indicates whether the Amazon EKS public API server endpoint is enabled. | `bool` | `false` | no |
@@ -146,7 +143,6 @@ module "cluster" {
 | <a name="input_existing_security_group_id"></a> [existing\_security\_group\_id](#input\_existing\_security\_group\_id) | ID of an existing security group to use. Required when create\_security\_group is false. | `string` | `null` | no |
 | <a name="input_existing_vpc_id"></a> [existing\_vpc\_id](#input\_existing\_vpc\_id) | ID of an existing VPC to use. Required when create\_vpc is false. | `string` | `null` | no |
 | <a name="input_iam_role_permissions_boundary"></a> [iam\_role\_permissions\_boundary](#input\_iam\_role\_permissions\_boundary) | The ARN of the policy that is used to set the permissions boundary for IAM roles created by this module. | `string` | `null` | no |
-| <a name="input_install_aws_load_balancer_controller"></a> [install\_aws\_load\_balancer\_controller](#input\_install\_aws\_load\_balancer\_controller) | Whether to install the AWS Load Balancer Controller via Helm. When enabled, Services of type LoadBalancer with the appropriate annotations are reconciled by AWS LBC (using IP-target NLB/ALB) instead of the in-tree Kubernetes AWS cloud provider. Recommended for all new clusters. | `bool` | `true` | no |
 | <a name="input_kubernetes_version"></a> [kubernetes\_version](#input\_kubernetes\_version) | Kubernetes `<major>.<minor>` version to use for the EKS cluster (i.e.: `1.33`) | `string` | `null` | no |
 | <a name="input_node_groups"></a> [node\_groups](#input\_node\_groups) | Map of node groups to create. Each node group supports the following attributes:<br/>- instance (required): EC2 instance type (e.g., "m5.xlarge")<br/>- min\_nodes: Minimum number of nodes (default: 0)<br/>- max\_nodes: Maximum number of nodes (default: 1)<br/>- ami\_type: Override AMI type (AL2023\_x86\_64\_STANDARD, AL2023\_ARM\_64\_STANDARD, AL2023\_x86\_64\_NVIDIA, etc.)<br/>- spot: Use Spot instances for cost savings (default: false)<br/>- disk\_size: Root disk size in GB (default: 20)<br/>- labels: Map of Kubernetes labels to apply to nodes (default: {})<br/>- taints: List of Kubernetes taints with keys: key, value, effect | <pre>map(object({<br/>    instance  = string<br/>    min_nodes = optional(number, 0)<br/>    max_nodes = optional(number, 1)<br/>    ami_type  = optional(string, "AL2023_x86_64_STANDARD")<br/>    spot      = optional(bool, false)<br/>    disk_size = optional(number, null)<br/>    labels    = optional(map(string), {})<br/>    taints = optional(list(object({<br/>      key    = string<br/>      value  = string<br/>      effect = string # NO_SCHEDULE, NO_EXECUTE, or PREFER_NO_SCHEDULE<br/>    })), [])<br/>  }))</pre> | n/a | yes |
 | <a name="input_node_security_group_additional_rules"></a> [node\_security\_group\_additional\_rules](#input\_node\_security\_group\_additional\_rules) | Additional security group rules to add to the node security group created by the EKS module. Set source\_cluster\_security\_group = true to allow traffic from the cluster security group. | `any` | `{}` | no |
@@ -158,7 +154,7 @@ module "cluster" {
 
 | Name | Description |
 |------|-------------|
-| <a name="output_aws_load_balancer_controller_role_arn"></a> [aws\_load\_balancer\_controller\_role\_arn](#output\_aws\_load\_balancer\_controller\_role\_arn) | IAM role ARN used by the AWS Load Balancer Controller (null if not installed) |
+| <a name="output_aws_load_balancer_controller_role_arn"></a> [aws\_load\_balancer\_controller\_role\_arn](#output\_aws\_load\_balancer\_controller\_role\_arn) | IAM role ARN for the AWS Load Balancer Controller pod identity association (null if enable\_aws\_load\_balancer\_controller\_pod\_identity is false) |
 | <a name="output_cluster_arn"></a> [cluster\_arn](#output\_cluster\_arn) | The Amazon Resource Name (ARN) of the cluster |
 | <a name="output_cluster_certificate_authority_data"></a> [cluster\_certificate\_authority\_data](#output\_cluster\_certificate\_authority\_data) | Base64 encoded certificate data required to communicate with the cluster |
 | <a name="output_cluster_endpoint"></a> [cluster\_endpoint](#output\_cluster\_endpoint) | Endpoint for your Kubernetes API server |

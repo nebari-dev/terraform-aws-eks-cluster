@@ -217,16 +217,10 @@ variable "node_security_group_additional_rules" {
 ################################################################################
 # AWS Load Balancer Controller
 ################################################################################
-variable "install_aws_load_balancer_controller" {
-  description = "Whether to install the AWS Load Balancer Controller via Helm. When enabled, Services of type LoadBalancer with the appropriate annotations are reconciled by AWS LBC (using IP-target NLB/ALB) instead of the in-tree Kubernetes AWS cloud provider. Recommended for all new clusters."
+variable "enable_aws_load_balancer_controller_pod_identity" {
+  description = "Whether to provision the IAM role and EKS Pod Identity association for the AWS Load Balancer Controller. The role is bound to the `aws-load-balancer-controller` service account in `kube-system`. The controller itself is not installed by this module - consumers (e.g., nebari-infrastructure-core) are expected to install the Helm chart after cluster creation. Recommended for all new clusters."
   type        = bool
   default     = true
-}
-
-variable "aws_load_balancer_controller_chart_version" {
-  description = "Version of the aws-load-balancer-controller Helm chart to install. See https://github.com/aws/eks-charts/releases."
-  type        = string
-  default     = "3.2.1"
 }
 
 ################################################################################

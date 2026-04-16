@@ -137,7 +137,7 @@ module "aws_lb_controller_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
   version = "2.7.0"
 
-  count = var.install_aws_load_balancer_controller ? 1 : 0
+  count = var.enable_aws_load_balancer_controller_pod_identity ? 1 : 0
 
   name = "${var.project_name}-aws-lbc"
 
@@ -152,46 +152,6 @@ module "aws_lb_controller_pod_identity" {
   }
 
   tags = var.tags
-}
-
-resource "helm_release" "aws_load_balancer_controller" {
-  count = var.install_aws_load_balancer_controller ? 1 : 0
-
-  name       = "aws-load-balancer-controller"
-  repository = "https://aws.github.io/eks-charts"
-  chart      = "aws-load-balancer-controller"
-  version    = var.aws_load_balancer_controller_chart_version
-  namespace  = "kube-system"
-
-  set {
-    name  = "clusterName"
-    value = module.eks.cluster_name
-  }
-
-  set {
-    name  = "region"
-    value = data.aws_region.current.region
-  }
-
-  set {
-    name  = "vpcId"
-    value = var.create_vpc ? one(module.vpc[*].vpc_id) : var.existing_vpc_id
-  }
-
-  set {
-    name  = "serviceAccount.create"
-    value = "true"
-  }
-
-  set {
-    name  = "serviceAccount.name"
-    value = "aws-load-balancer-controller"
-  }
-
-  depends_on = [
-    module.aws_lb_controller_pod_identity,
-    module.eks,
-  ]
 }
 
 module "vpc_endpoints" {
