@@ -85,9 +85,6 @@ output "node_iam_role_arn" {
   value       = local.node_iam_role_arn
 }
 
-################################################################################
-# AWS Load Balancer Controller
-################################################################################
 output "aws_load_balancer_controller_role_arn" {
   description = "IAM role ARN for the AWS Load Balancer Controller pod identity association (null if enable_aws_load_balancer_controller_pod_identity is false)"
   value       = one(module.aws_lb_controller_pod_identity[*].iam_role_arn)
