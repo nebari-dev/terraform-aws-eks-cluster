@@ -214,6 +214,12 @@ variable "node_security_group_additional_rules" {
   default     = {}
 }
 
+variable "enable_aws_load_balancer_controller_pod_identity" {
+  description = "Whether to provision the IAM role and EKS Pod Identity association for the AWS Load Balancer Controller. The role is bound to the `aws-load-balancer-controller` service account in `kube-system`. The controller itself is not installed by this module - consumers (e.g., nebari-infrastructure-core) are expected to install the Helm chart after cluster creation. Recommended for all new clusters. If you set this to false, you will need to    create your own IAM role and pod identity association"
+  type        = bool
+  default     = true
+}
+
 ################################################################################
 # EFS
 ################################################################################

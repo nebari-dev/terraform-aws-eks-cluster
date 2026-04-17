@@ -133,6 +133,32 @@ module "eks" {
   tags = var.tags
 }
 
+# Association is configured via the pod-identity module's `associations`
+# argument (rather than via `module.eks.addons.pod_identity_association`, like
+# the EBS/EFS CSI drivers above) because the AWS Load Balancer Controller is
+# not an EKS-managed addon - AWS publishes no addon for it, so the chart is
+# installed separately by consumers of this module.
+module "aws_lb_controller_pod_identity" {
+  source  = "terraform-aws-modules/eks-pod-identity/aws"
+  version = "2.7.0"
+
+  count = var.enable_aws_load_balancer_controller_pod_identity ? 1 : 0
+
+  name = "${var.project_name}-aws-lbc"
+
+  attach_aws_lb_controller_policy = true
+
+  associations = {
+    this = {
+      cluster_name    = module.eks.cluster_name
+      namespace       = "kube-system"
+      service_account = "aws-load-balancer-controller"
+    }
+  }
+
+  tags = var.tags
+}
+
 module "vpc_endpoints" {
   source = "./modules/vpc-endpoints"
 
