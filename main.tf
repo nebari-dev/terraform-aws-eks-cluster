@@ -128,6 +128,20 @@ module "eks" {
 
   node_security_group_additional_rules = var.node_security_group_additional_rules
 
+  # Suppress the upstream module's `kubernetes.io/cluster/<name> = owned` tag on
+  # the shared node SG. EKS auto-adds the same tag to its mandatory cluster
+  # primary SG (which gets attached to every managed-node-group node), so two
+  # SGs end up tagged. The AWS Load Balancer Controller refuses that ambiguity
+  # ("expected exactly one securityGroup tagged with kubernetes.io/cluster/...")
+  # and silently fails to add ingress rules to the node SG, leaving NLB
+  # targets unhealthy. We strip the duplicate tag here rather than disabling
+  # the node SG entirely so node_security_group_additional_rules (used by
+  # consumers like the Longhorn webhook ports) still has a SG to attach to.
+  # See: https://github.com/terraform-aws-modules/terraform-aws-eks/blob/master/docs/faq.md
+  node_security_group_tags = {
+    "kubernetes.io/cluster/${var.project_name}" = null
+  }
+
   eks_managed_node_groups = local.node_groups
 
   tags = var.tags
