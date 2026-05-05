@@ -9,7 +9,7 @@ module "vpc" {
   cidr = var.vpc_cidr_block
 
   azs             = local.availability_zones
-  create_igw      = true
+  create_igw      = false
   private_subnets = local.private_subnets
   public_subnets  = local.public_subnets
 
