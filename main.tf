@@ -11,14 +11,11 @@ module "vpc" {
   azs             = local.availability_zones
   create_igw      = false
   private_subnets = local.private_subnets
-  public_subnets  = local.public_subnets
+  public_subnets  = []
 
   private_subnet_tags = { "kubernetes.io/role/internal-elb" = "1" }
-  public_subnet_tags  = { "kubernetes.io/role/elb" = "1" }
 
-  enable_nat_gateway     = true
-  single_nat_gateway     = false
-  one_nat_gateway_per_az = true
+  enable_nat_gateway = false
 
   enable_dns_hostnames = true
   enable_dns_support   = true
