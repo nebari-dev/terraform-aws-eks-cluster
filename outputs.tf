@@ -85,6 +85,11 @@ output "node_iam_role_arn" {
   value       = local.node_iam_role_arn
 }
 
+output "aws_load_balancer_controller_role_arn" {
+  description = "IAM role ARN for the AWS Load Balancer Controller pod identity association (null if enable_aws_load_balancer_controller_pod_identity is false)"
+  value       = one(module.aws_lb_controller_pod_identity[*].iam_role_arn)
+}
+
 ################################################################################
 # EFS
 ################################################################################
@@ -101,6 +106,11 @@ output "efs_arn" {
 output "efs_dns_name" {
   description = "The DNS name of the EFS file system (null if EFS not enabled)"
   value       = one(module.efs[*].dns_name)
+}
+
+output "efs_csi_driver_role_arn" {
+  description = "IAM role ARN for the EFS CSI driver (null if EFS not enabled)"
+  value       = one(module.efs_csi_pod_identity[*].iam_role_arn)
 }
 
 ################################################################################

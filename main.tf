@@ -60,6 +60,19 @@ module "node_userdata" {
   extra_ca_bundle = var.extra_ca_bundle
 }
 
+module "efs_csi_pod_identity" {
+  source  = "terraform-aws-modules/eks-pod-identity/aws"
+  version = "2.7.0"
+
+  count = var.efs_enabled ? 1 : 0
+
+  name = "${var.project_name}-aws-efs-csi"
+
+  attach_aws_efs_csi_policy = true
+
+  tags = var.tags
+}
+
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "21.11.0"
@@ -67,22 +80,32 @@ module "eks" {
   name               = var.project_name
   kubernetes_version = var.kubernetes_version
 
-  addons = {
-    aws-ebs-csi-driver = {
-      pod_identity_association = [{
-        role_arn        = module.ebs_csi_pod_identity.iam_role_arn,
-        service_account = "ebs-csi-controller-sa"
-      }]
-    }
-    coredns = {}
-    eks-pod-identity-agent = {
-      before_compute = true
-    }
-    kube-proxy = {}
-    vpc-cni = {
-      before_compute = true
-    }
-  }
+  addons = merge(
+    {
+      aws-ebs-csi-driver = {
+        pod_identity_association = [{
+          role_arn        = module.ebs_csi_pod_identity.iam_role_arn,
+          service_account = "ebs-csi-controller-sa"
+        }]
+      }
+      coredns = {}
+      eks-pod-identity-agent = {
+        before_compute = true
+      }
+      kube-proxy = {}
+      vpc-cni = {
+        before_compute = true
+      }
+    },
+    var.efs_enabled ? {
+      aws-efs-csi-driver = {
+        pod_identity_association = [{
+          role_arn        = one(module.efs_csi_pod_identity[*].iam_role_arn)
+          service_account = "efs-csi-controller-sa"
+        }]
+      }
+    } : {}
+  )
 
   # Use existing security group if provided or have EKS create one otherwise
   create_security_group = var.create_security_group
@@ -114,7 +137,49 @@ module "eks" {
 
   node_security_group_additional_rules = var.node_security_group_additional_rules
 
+  # Suppress the upstream module's `kubernetes.io/cluster/<name> = owned` tag on
+  # the shared node SG. EKS auto-adds the same tag to its mandatory cluster
+  # primary SG (which gets attached to every managed-node-group node), so two
+  # SGs end up tagged. The AWS Load Balancer Controller refuses that ambiguity
+  # ("expected exactly one securityGroup tagged with kubernetes.io/cluster/...")
+  # and silently fails to add ingress rules to the node SG, leaving NLB
+  # targets unhealthy. We strip the duplicate tag here rather than disabling
+  # the node SG entirely so node_security_group_additional_rules (used by
+  # consumers like the Longhorn webhook ports) still has a SG to attach to.
+  # See: https://github.com/terraform-aws-modules/terraform-aws-eks/blob/master/docs/faq.md
+  node_security_group_tags = {
+    "kubernetes.io/cluster/${var.project_name}" = null
+  }
+
   eks_managed_node_groups = local.node_groups
+
+  enable_irsa = var.enable_irsa
+
+  tags = var.tags
+}
+
+# Association is configured via the pod-identity module's `associations`
+# argument (rather than via `module.eks.addons.pod_identity_association`, like
+# the EBS/EFS CSI drivers above) because the AWS Load Balancer Controller is
+# not an EKS-managed addon - AWS publishes no addon for it, so the chart is
+# installed separately by consumers of this module.
+module "aws_lb_controller_pod_identity" {
+  source  = "terraform-aws-modules/eks-pod-identity/aws"
+  version = "2.7.0"
+
+  count = var.enable_aws_load_balancer_controller_pod_identity ? 1 : 0
+
+  name = "${var.project_name}-aws-lbc"
+
+  attach_aws_lb_controller_policy = true
+
+  associations = {
+    this = {
+      cluster_name    = module.eks.cluster_name
+      namespace       = "kube-system"
+      service_account = "aws-load-balancer-controller"
+    }
+  }
 
   tags = var.tags
 }

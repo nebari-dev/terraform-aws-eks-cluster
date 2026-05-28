@@ -100,8 +100,10 @@ module "cluster" {
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_aws_lb_controller_pod_identity"></a> [aws\_lb\_controller\_pod\_identity](#module\_aws\_lb\_controller\_pod\_identity) | terraform-aws-modules/eks-pod-identity/aws | 2.7.0 |
 | <a name="module_ebs_csi_pod_identity"></a> [ebs\_csi\_pod\_identity](#module\_ebs\_csi\_pod\_identity) | terraform-aws-modules/eks-pod-identity/aws | 2.7.0 |
 | <a name="module_efs"></a> [efs](#module\_efs) | terraform-aws-modules/efs/aws | 2.0.0 |
+| <a name="module_efs_csi_pod_identity"></a> [efs\_csi\_pod\_identity](#module\_efs\_csi\_pod\_identity) | terraform-aws-modules/eks-pod-identity/aws | 2.7.0 |
 | <a name="module_eks"></a> [eks](#module\_eks) | terraform-aws-modules/eks/aws | 21.11.0 |
 | <a name="module_iam"></a> [iam](#module\_iam) | ./modules/iam | n/a |
 | <a name="module_vpc"></a> [vpc](#module\_vpc) | terraform-aws-modules/vpc/aws | 6.5.1 |
@@ -130,7 +132,9 @@ module "cluster" {
 | <a name="input_efs_provisioned_throughput_in_mibps"></a> [efs\_provisioned\_throughput\_in\_mibps](#input\_efs\_provisioned\_throughput\_in\_mibps) | The provisioned throughput in MiB/s for the EFS file system. Required if throughput\_mode is set to provisioned. | `number` | `null` | no |
 | <a name="input_efs_throughput_mode"></a> [efs\_throughput\_mode](#input\_efs\_throughput\_mode) | The throughput mode of the EFS file system. Default is `bursting`. | `string` | `"bursting"` | no |
 | <a name="input_eks_kms_arn"></a> [eks\_kms\_arn](#input\_eks\_kms\_arn) | The ARN of the KMS key to use for encrypting EKS secrets. If not provided, EKS secrets will not be encrypted. | `string` | `null` | no |
+| <a name="input_enable_aws_load_balancer_controller_pod_identity"></a> [enable\_aws\_load\_balancer\_controller\_pod\_identity](#input\_enable\_aws\_load\_balancer\_controller\_pod\_identity) | Whether to provision the IAM role and EKS Pod Identity association for the AWS Load Balancer Controller. The role is bound to the `aws-load-balancer-controller` service account in `kube-system`. The controller itself is not installed by this module - consumers (e.g., nebari-infrastructure-core) are expected to install the Helm chart after cluster creation. Recommended for all new clusters. If you set this to false, you will need to    create your own IAM role and pod identity association | `bool` | `true` | no |
 | <a name="input_enable_cluster_creator_admin_permissions"></a> [enable\_cluster\_creator\_admin\_permissions](#input\_enable\_cluster\_creator\_admin\_permissions) | Whether to grant admin permissions to the IAM user or role that creates the EKS cluster. This allows the creator to manage the cluster after creation. | `bool` | `false` | no |
+| <a name="input_enable_irsa"></a> [enable\_irsa](#input\_enable\_irsa) | Whether to create the EKS OIDC provider for IAM Roles for Service Accounts. Set to false when the cluster relies exclusively on EKS Pod Identity, or when the VPC cannot resolve `oidc.eks.<region>.amazonaws.com` (a fully-private deployment with no public DNS resolution). When false, the upstream EKS module skips both the certificate-thumbprint fetch and the `aws_iam_openid_connect_provider` resource. | `bool` | `true` | no |
 | <a name="input_endpoint_private_access"></a> [endpoint\_private\_access](#input\_endpoint\_private\_access) | Indicates whether the Amazon EKS private API server endpoint is enabled. | `bool` | `true` | no |
 | <a name="input_endpoint_public_access"></a> [endpoint\_public\_access](#input\_endpoint\_public\_access) | Indicates whether the Amazon EKS public API server endpoint is enabled. | `bool` | `false` | no |
 | <a name="input_endpoint_public_access_cidrs"></a> [endpoint\_public\_access\_cidrs](#input\_endpoint\_public\_access\_cidrs) | List of CIDR blocks which can access the Amazon EKS public API server endpoint. | `list(string)` | <pre>[<br/>  "0.0.0.0/0"<br/>]</pre> | no |
@@ -152,6 +156,7 @@ module "cluster" {
 
 | Name | Description |
 |------|-------------|
+| <a name="output_aws_load_balancer_controller_role_arn"></a> [aws\_load\_balancer\_controller\_role\_arn](#output\_aws\_load\_balancer\_controller\_role\_arn) | IAM role ARN for the AWS Load Balancer Controller pod identity association (null if enable\_aws\_load\_balancer\_controller\_pod\_identity is false) |
 | <a name="output_cluster_arn"></a> [cluster\_arn](#output\_cluster\_arn) | The Amazon Resource Name (ARN) of the cluster |
 | <a name="output_cluster_certificate_authority_data"></a> [cluster\_certificate\_authority\_data](#output\_cluster\_certificate\_authority\_data) | Base64 encoded certificate data required to communicate with the cluster |
 | <a name="output_cluster_endpoint"></a> [cluster\_endpoint](#output\_cluster\_endpoint) | Endpoint for your Kubernetes API server |
@@ -161,6 +166,7 @@ module "cluster" {
 | <a name="output_cluster_oidc_issuer_url"></a> [cluster\_oidc\_issuer\_url](#output\_cluster\_oidc\_issuer\_url) | The URL on the EKS cluster for the OpenID Connect identity provider |
 | <a name="output_cluster_security_group_id"></a> [cluster\_security\_group\_id](#output\_cluster\_security\_group\_id) | Security group ID attached to the EKS cluster |
 | <a name="output_efs_arn"></a> [efs\_arn](#output\_efs\_arn) | The ARN of the EFS file system (null if EFS not enabled) |
+| <a name="output_efs_csi_driver_role_arn"></a> [efs\_csi\_driver\_role\_arn](#output\_efs\_csi\_driver\_role\_arn) | IAM role ARN for the EFS CSI driver (null if EFS not enabled) |
 | <a name="output_efs_dns_name"></a> [efs\_dns\_name](#output\_efs\_dns\_name) | The DNS name of the EFS file system (null if EFS not enabled) |
 | <a name="output_efs_id"></a> [efs\_id](#output\_efs\_id) | The ID of the EFS file system (null if EFS not enabled) |
 | <a name="output_kubeconfig_command"></a> [kubeconfig\_command](#output\_kubeconfig\_command) | Command to update kubeconfig |

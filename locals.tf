@@ -24,17 +24,20 @@ locals {
   # with the VPC if existing ones are not provided.
   private_subnet_ids = var.create_vpc ? flatten(module.vpc[*].private_subnets) : var.existing_private_subnet_ids
 
-  interface_vpc_endpoint_services = var.create_vpc ? [
-    "ec2",
-    "ecr.api",
-    "ecr.dkr",
-    "sts",
-    "eks",
-    "eks-auth",
-    "logs",
-    "elasticloadbalancing",
-    "autoscaling",
-  ] : []
+  interface_vpc_endpoint_services = var.create_vpc ? concat(
+    [
+      "ec2",
+      "ecr.api",
+      "ecr.dkr",
+      "sts",
+      "eks",
+      "eks-auth",
+      "logs",
+      "elasticloadbalancing",
+      "autoscaling",
+    ],
+    var.efs_enabled ? ["elasticfilesystem"] : [],
+  ) : []
   gateway_vpc_endpoint_services = var.create_vpc ? [
     "s3",
   ] : []
@@ -59,8 +62,21 @@ locals {
 
       instance_types = [config.instance]
       capacity_type  = config.spot ? "SPOT" : "ON_DEMAND"
-      disk_size      = config.disk_size
       ami_type       = config.ami_type
+
+      # disk_size must be set via block_device_mappings because the upstream EKS
+      # module creates a custom launch template by default, which causes the
+      # node group disk_size field to be ignored by the EKS API.
+      block_device_mappings = config.disk_size != null ? {
+        root = {
+          device_name = "/dev/xvda"
+          ebs = {
+            volume_size           = config.disk_size
+            volume_type           = "gp3"
+            delete_on_termination = true
+          }
+        }
+      } : {}
 
       min_size     = config.min_nodes
       max_size     = config.max_nodes
@@ -72,6 +88,14 @@ locals {
       iam_role_arn    = local.node_iam_role_arn
 
       vpc_security_group_ids = local.additional_node_security_group_ids
+
+      # Attach the EKS-managed primary cluster SG to nodes when we own the SG
+      # setup. This SG allows all traffic between its members, which lets EFS
+      # mount targets (attached to the primary SG) accept NFS from nodes
+      # without a standalone rule, and future-proofs any addon that needs
+      # node-to-cluster-SG communication. When create_security_group is false,
+      # users bring their own SG and manage their own rules.
+      attach_cluster_primary_security_group = var.create_security_group
 
       labels = config.labels
 

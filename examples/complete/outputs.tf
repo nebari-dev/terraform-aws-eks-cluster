@@ -89,6 +89,11 @@ output "efs_dns_name" {
   value       = module.cluster.efs_dns_name
 }
 
+output "efs_csi_driver_role_arn" {
+  description = "IAM role ARN for the EFS CSI driver (null if EFS not enabled)"
+  value       = module.cluster.efs_csi_driver_role_arn
+}
+
 output "kubeconfig_command" {
   description = "Command to update kubeconfig"
   value       = module.cluster.kubeconfig_command
