@@ -51,6 +51,15 @@ module "ebs_csi_pod_identity" {
   tags = var.tags
 }
 
+module "node_userdata" {
+  source = "./modules/userdata"
+
+  for_each = var.node_groups
+
+  ami_type        = each.value.ami_type
+  extra_ca_bundle = var.extra_ca_bundle
+}
+
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "21.11.0"

@@ -214,6 +214,25 @@ variable "node_security_group_additional_rules" {
   default     = {}
 }
 
+variable "extra_ca_bundle" {
+  description = <<-EOT
+    Optional base64-encoded PEM bundle to install into each worker node's OS trust store before
+    the EKS bootstrap runs. Required when nodes must reach the EKS control plane, ECR, or pull
+    container images through a TLS-inspecting egress proxy. For AL2023 nodes the bundle is
+    written to /etc/pki/ca-trust/source/anchors/org-ca.crt and `update-ca-trust extract` is run.
+    For Bottlerocket nodes the bundle is configured via `settings.pki.org-ca` with `trusted = true`.
+    Leave unset to make no changes to the node trust store.
+  EOT
+  type        = string
+  default     = null
+  sensitive   = false
+
+  validation {
+    condition     = var.extra_ca_bundle == null || can(base64decode(var.extra_ca_bundle))
+    error_message = "extra_ca_bundle must be a valid base64-encoded string."
+  }
+}
+
 ################################################################################
 # EFS
 ################################################################################

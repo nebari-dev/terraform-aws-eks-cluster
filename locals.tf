@@ -84,6 +84,12 @@ locals {
           effect = taint.effect
         }
       }
+
+      # Extra-CA install hooks. The userdata submodule renders the right form per AMI:
+      # cloudinit_pre_nodeadm for AL2023/AL2, bootstrap_extra_args TOML for Bottlerocket.
+      # Both outputs are null when extra_ca_bundle is unset, leaving launch templates unchanged.
+      bootstrap_extra_args  = module.node_userdata[name].bootstrap_extra_args
+      cloudinit_pre_nodeadm = module.node_userdata[name].cloudinit_pre_nodeadm
     }
   }
 
