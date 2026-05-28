@@ -1,4 +1,4 @@
-.PHONY: help init lint test docs clean install-tools validate fmt
+.PHONY: help init lint test test-unit docs clean install-tools validate fmt
 
 help: ## Show this help message
 	@echo "Available targets:"
@@ -34,7 +34,11 @@ lint: fmt validate ## Run all linting checks (fmt + validate)
 	@echo "Running pre-commit hooks..."
 	@pre-commit run --all-files || true
 
-test: ## Run Terratest suite
+test-unit: ## Run native tofu tests (no cloud resources required)
+	@echo "Running tofu test in modules/userdata..."
+	@cd modules/userdata && tofu init -backend=false >/dev/null && tofu test
+
+test: test-unit ## Run unit tests and the Terratest integration suite
 	@echo "Running Terratest suite..."
 	@cd test && go test -v -timeout 60m
 

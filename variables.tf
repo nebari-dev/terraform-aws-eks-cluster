@@ -214,6 +214,25 @@ variable "node_security_group_additional_rules" {
   default     = {}
 }
 
+variable "extra_ca_bundle" {
+  description = <<-EOT
+    Optional base64-encoded PEM bundle to install into each worker node's OS trust store before
+    the EKS bootstrap runs. Required when nodes must reach the EKS control plane, ECR, or pull
+    container images through a TLS-inspecting egress proxy. For AL2023 nodes the bundle is
+    written to /etc/pki/ca-trust/source/anchors/org-ca.crt and `update-ca-trust extract` is run.
+    For Bottlerocket nodes the bundle is configured via `settings.pki.org-ca` with `trusted = true`.
+    Leave unset to make no changes to the node trust store.
+  EOT
+  type        = string
+  default     = null
+  sensitive   = false
+
+  validation {
+    condition     = var.extra_ca_bundle == null || can(base64decode(var.extra_ca_bundle))
+    error_message = "extra_ca_bundle must be a valid base64-encoded string."
+  }
+}
+
 variable "enable_aws_load_balancer_controller_pod_identity" {
   description = "Whether to provision the IAM role and EKS Pod Identity association for the AWS Load Balancer Controller. The role is bound to the `aws-load-balancer-controller` service account in `kube-system`. The controller itself is not installed by this module - consumers (e.g., nebari-infrastructure-core) are expected to install the Helm chart after cluster creation. Recommended for all new clusters. If you set this to false, you will need to    create your own IAM role and pod identity association"
   type        = bool
