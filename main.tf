@@ -144,6 +144,8 @@ module "eks" {
 
   eks_managed_node_groups = local.node_groups
 
+  enable_irsa = var.enable_irsa
+
   tags = var.tags
 }
 

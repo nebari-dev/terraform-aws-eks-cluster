@@ -220,6 +220,12 @@ variable "enable_aws_load_balancer_controller_pod_identity" {
   default     = true
 }
 
+variable "enable_irsa" {
+  description = "Whether to create the EKS OIDC provider for IAM Roles for Service Accounts. Set to false when the cluster relies exclusively on EKS Pod Identity, or when the VPC cannot resolve `oidc.eks.<region>.amazonaws.com` (a fully-private deployment with no public DNS resolution). When false, the upstream EKS module skips both the certificate-thumbprint fetch and the `aws_iam_openid_connect_provider` resource."
+  type        = bool
+  default     = true
+}
+
 ################################################################################
 # EFS
 ################################################################################
