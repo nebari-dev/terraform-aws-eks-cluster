@@ -10,6 +10,10 @@ variable "ami_type" {
 }
 
 locals {
+  # Binary dispatch: Bottlerocket -> TOML path, everything else -> AL2023 bash
+  # shellscript. If this module ever needs to support Windows AMI types
+  # (WINDOWS_CORE_*, WINDOWS_FULL_*), revisit this check — they would currently
+  # fall through to the AL2023 path and silently break boot.
   is_bottlerocket = startswith(var.ami_type, "BOTTLEROCKET_")
 
   # AL2023 is RHEL-based: drop anchors under /etc/pki/ca-trust/source/anchors and run
