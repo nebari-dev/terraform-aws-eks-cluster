@@ -27,7 +27,7 @@ run "al2023_renders_cloudinit_pre_nodeadm" {
   }
 
   assert {
-    condition     = strcontains(output.cloudinit_pre_nodeadm[0].content, "echo '${var.extra_ca_bundle}' | base64 -d > /etc/pki/ca-trust/source/anchors/org-ca.crt")
+    condition     = strcontains(output.cloudinit_pre_nodeadm[0].content, "echo 'RFVNTVktQ0EtUEVNLURBVEEK' | base64 -d > /etc/pki/ca-trust/source/anchors/org-ca.crt")
     error_message = "Pre-nodeadm script must decode the provided bundle into the AL2023 trust anchor directory."
   }
 
@@ -68,7 +68,7 @@ run "bottlerocket_renders_toml_settings" {
   }
 
   assert {
-    condition     = strcontains(output.bootstrap_extra_args, "data = \"${var.extra_ca_bundle}\"")
+    condition     = strcontains(output.bootstrap_extra_args, "data = \"RFVNTVktQ0EtUEVNLURBVEEK\"")
     error_message = "Bottlerocket pki.data must contain the base64-encoded bundle verbatim."
   }
 
