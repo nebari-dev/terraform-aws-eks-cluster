@@ -184,6 +184,31 @@ module "aws_lb_controller_pod_identity" {
   tags = var.tags
 }
 
+# The Cluster Autoscaler is not an EKS-managed addon, so the association is configured 
+# via the pod-identity module's `associations` argument. Consumers are expected to install
+# the Cluster Autoscaler helm chart separately.
+module "cluster_autoscaler_pod_identity" {
+  source  = "terraform-aws-modules/eks-pod-identity/aws"
+  version = "2.7.0"
+
+  count = var.enable_cluster_autoscaler_pod_identity ? 1 : 0
+
+  name = "${var.project_name}-cluster-autoscaler"
+
+  attach_cluster_autoscaler_policy = true
+  cluster_autoscaler_cluster_names = [var.project_name]
+
+  associations = {
+    this = {
+      cluster_name    = module.eks.cluster_name
+      namespace       = "kube-system"
+      service_account = "cluster-autoscaler"
+    }
+  }
+
+  tags = var.tags
+}
+
 module "vpc_endpoints" {
   source = "./modules/vpc-endpoints"
 
