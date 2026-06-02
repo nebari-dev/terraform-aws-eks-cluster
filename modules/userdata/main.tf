@@ -2,6 +2,16 @@ variable "extra_ca_bundle" {
   description = "Optional base64-encoded PEM bundle to install into the node OS trust store. Unset means no changes."
   type        = string
   default     = null
+
+  # The bundle is interpolated into a single-quoted shell command and a TOML
+  # basic string in the templates below. The base64 alphabet excludes quotes
+  # and backslashes, so a value that decodes cleanly cannot break out of either
+  # context. Enforcing it here keeps that guarantee local to the templating,
+  # rather than relying on the parent module having already validated it.
+  validation {
+    condition     = var.extra_ca_bundle == null || can(base64decode(var.extra_ca_bundle))
+    error_message = "extra_ca_bundle must be a valid base64-encoded string."
+  }
 }
 
 variable "ami_type" {
