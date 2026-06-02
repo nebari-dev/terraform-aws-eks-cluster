@@ -106,6 +106,7 @@ module "cluster" {
 | <a name="module_efs_csi_pod_identity"></a> [efs\_csi\_pod\_identity](#module\_efs\_csi\_pod\_identity) | terraform-aws-modules/eks-pod-identity/aws | 2.7.0 |
 | <a name="module_eks"></a> [eks](#module\_eks) | terraform-aws-modules/eks/aws | 21.11.0 |
 | <a name="module_iam"></a> [iam](#module\_iam) | ./modules/iam | n/a |
+| <a name="module_node_userdata"></a> [node\_userdata](#module\_node\_userdata) | ./modules/userdata | n/a |
 | <a name="module_vpc"></a> [vpc](#module\_vpc) | terraform-aws-modules/vpc/aws | 6.5.1 |
 | <a name="module_vpc_endpoints"></a> [vpc\_endpoints](#module\_vpc\_endpoints) | ./modules/vpc-endpoints | n/a |
 
