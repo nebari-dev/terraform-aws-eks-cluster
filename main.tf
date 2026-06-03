@@ -193,7 +193,7 @@ module "cluster_autoscaler_pod_identity" {
 
   count = var.enable_cluster_autoscaler_pod_identity ? 1 : 0
 
-  name = "${var.project_name}-cluster-autoscaler"
+  name = "${var.project_name}-autoscaler"
 
   attach_cluster_autoscaler_policy = true
   cluster_autoscaler_cluster_names = [var.project_name]
