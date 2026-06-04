@@ -239,6 +239,12 @@ variable "enable_aws_load_balancer_controller_pod_identity" {
   default     = true
 }
 
+variable "enable_cluster_autoscaler_pod_identity" {
+  description = "Whether to provision the IAM role and EKS Pod Identity association for the Kubernetes Cluster Autoscaler. The role is bound to the `cluster-autoscaler` service account in `kube-system`. The autoscaler itself is not installed by this module and consumers are expected to install the Helm chart after cluster creation. If you set this to false, you will need to create your own IAM role and pod identity association."
+  type        = bool
+  default     = true
+}
+
 variable "enable_irsa" {
   description = "Whether to create the EKS OIDC provider for IAM Roles for Service Accounts. Set to false when the cluster relies exclusively on EKS Pod Identity, or when the VPC cannot resolve `oidc.eks.<region>.amazonaws.com` (a fully-private deployment with no public DNS resolution). When false, the upstream EKS module skips both the certificate-thumbprint fetch and the `aws_iam_openid_connect_provider` resource."
   type        = bool

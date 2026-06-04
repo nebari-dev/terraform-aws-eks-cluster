@@ -90,6 +90,11 @@ output "aws_load_balancer_controller_role_arn" {
   value       = one(module.aws_lb_controller_pod_identity[*].iam_role_arn)
 }
 
+output "cluster_autoscaler_role_arn" {
+  description = "IAM role ARN for the Cluster Autoscaler pod identity association (null if enable_cluster_autoscaler_pod_identity is false)"
+  value       = one(module.cluster_autoscaler_pod_identity[*].iam_role_arn)
+}
+
 ################################################################################
 # EFS
 ################################################################################
