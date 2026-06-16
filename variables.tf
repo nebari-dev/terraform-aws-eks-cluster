@@ -168,6 +168,7 @@ variable "node_groups" {
     - disk_size: Root disk size in GB (default: 20)
     - labels: Map of Kubernetes labels to apply to nodes (default: {})
     - taints: List of Kubernetes taints with keys: key, value, effect
+    - suspend_az_rebalance: Suspend the AZRebalance process on this node group's ASG (default: false). Recommended for stateful/storage node groups (e.g. Longhorn) to prevent disruptive AZ-rebalancing node terminations.
   EOT
   type = map(object({
     instance  = string
@@ -182,6 +183,7 @@ variable "node_groups" {
       value  = string
       effect = string # NO_SCHEDULE, NO_EXECUTE, or PREFER_NO_SCHEDULE
     })), [])
+    suspend_az_rebalance = optional(bool, false)
   }))
 
   validation {
