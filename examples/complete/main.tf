@@ -25,10 +25,14 @@ module "cluster" {
       }
     }
     worker = {
-      instance  = "t3.medium"
-      spot      = true
-      min_nodes = 1
-      max_nodes = 6
+      instance = "t3.medium"
+      spot     = true
+      # Roll one node at a time so a replicated storage backend (e.g. Longhorn)
+      # can rebuild replicas onto the replacement node before the next old node
+      # is drained.
+      max_unavailable = 1
+      min_nodes       = 1
+      max_nodes       = 6
       taints = [{
         key    = "dedicated"
         value  = "batch-jobs"

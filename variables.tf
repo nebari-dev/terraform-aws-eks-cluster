@@ -168,15 +168,21 @@ variable "node_groups" {
     - disk_size: Root disk size in GB (default: 20)
     - labels: Map of Kubernetes labels to apply to nodes (default: {})
     - taints: List of Kubernetes taints with keys: key, value, effect
+    - max_unavailable: Max nodes to make unavailable at once during a rolling
+      update (default: null, which leaves the EKS managed node group default of
+      33% in place). Set to 1 for storage pools so a replicated storage backend
+      (e.g. Longhorn) can rebuild replicas onto the new node before the next old
+      node is drained.
   EOT
   type = map(object({
-    instance  = string
-    min_nodes = optional(number, 0)
-    max_nodes = optional(number, 1)
-    ami_type  = optional(string, "AL2023_x86_64_STANDARD")
-    spot      = optional(bool, false)
-    disk_size = optional(number, null)
-    labels    = optional(map(string), {})
+    instance        = string
+    min_nodes       = optional(number, 0)
+    max_nodes       = optional(number, 1)
+    ami_type        = optional(string, "AL2023_x86_64_STANDARD")
+    spot            = optional(bool, false)
+    disk_size       = optional(number, null)
+    max_unavailable = optional(number, null)
+    labels          = optional(map(string), {})
     taints = optional(list(object({
       key    = string
       value  = string
@@ -195,6 +201,14 @@ variable "node_groups" {
       ng.min_nodes >= 0 && ng.max_nodes >= ng.min_nodes
     ])
     error_message = "For each node group, min_nodes must be >= 0 and max_nodes must be >= min_nodes."
+  }
+
+  validation {
+    condition = alltrue([
+      for ng_name, ng in var.node_groups :
+      ng.max_unavailable == null || ng.max_unavailable >= 1
+    ])
+    error_message = "For each node group, max_unavailable must be >= 1 when set."
   }
 
   validation {
