@@ -57,7 +57,7 @@ locals {
 
   # Map node groups to the format expected by the EKS module
   node_groups = {
-    for name, config in var.node_groups : name => {
+    for name, config in var.node_groups : name => merge({
       name = name
 
       instance_types = [config.instance]
@@ -114,7 +114,18 @@ locals {
       # Both outputs are null when extra_ca_bundle is unset, leaving launch templates unchanged.
       bootstrap_extra_args  = module.node_userdata[name].bootstrap_extra_args
       cloudinit_pre_nodeadm = module.node_userdata[name].cloudinit_pre_nodeadm
-    }
+      },
+      # Only set update_config when max_unavailable is provided; otherwise leave
+      # the EKS managed node group default (33% unavailable) in place. Setting
+      # max_unavailable = 1 lets a replicated storage backend (e.g. Longhorn)
+      # rebuild replicas onto the replacement node before the next old node is
+      # drained during a rolling update.
+      config.max_unavailable != null ? {
+        update_config = {
+          max_unavailable = config.max_unavailable
+        }
+      } : {}
+    )
   }
 
   # Map each private subnet ID to its EFS mount target configuration
