@@ -320,3 +320,9 @@ variable "longhorn_backup_bucket_force_destroy" {
   type        = bool
   default     = false
 }
+
+variable "longhorn_backup_pod_identity_enable" {
+  description = "Provision an EKS Pod Identity association granting Longhorn's service account (longhorn-service-account in longhorn-system) scoped S3 access to the backup bucket, so Longhorn backs up without static credentials. Requires longhorn_backup_bucket_name (created here or pre-existing)."
+  type        = bool
+  default     = false
+}
