@@ -125,3 +125,11 @@ output "kubeconfig_command" {
   description = "Command to update kubeconfig"
   value       = "aws eks update-kubeconfig --region ${data.aws_region.current.region} --name ${module.eks.cluster_name}"
 }
+
+################################################################################
+# Longhorn backup
+################################################################################
+output "longhorn_backup_bucket" {
+  description = "Name of the Longhorn backup S3 bucket; empty when not created."
+  value       = var.longhorn_backup_bucket_create ? aws_s3_bucket.longhorn_backup[0].id : ""
+}

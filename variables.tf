@@ -299,3 +299,24 @@ variable "efs_kms_key_arn" {
   type        = string
   default     = null
 }
+
+################################################################################
+# Longhorn backup bucket
+################################################################################
+variable "longhorn_backup_bucket_create" {
+  description = "Create an S3 bucket for Longhorn off-cluster backups."
+  type        = bool
+  default     = false
+}
+
+variable "longhorn_backup_bucket_name" {
+  description = "Name of the Longhorn backup S3 bucket. Required when longhorn_backup_bucket_create is true."
+  type        = string
+  default     = ""
+}
+
+variable "longhorn_backup_bucket_force_destroy" {
+  description = "Allow `terraform destroy` to delete a non-empty Longhorn backup bucket. When false, a non-empty bucket blocks deletion, protecting existing backups."
+  type        = bool
+  default     = false
+}
