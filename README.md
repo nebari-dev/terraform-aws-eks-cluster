@@ -86,20 +86,20 @@ module "cluster" {
 ## Requirements
 
 | Name | Version |
-| ---- | ------- |
+|------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.0 |
 
 ## Providers
 
 | Name | Version |
-| ---- | ------- |
+|------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | >= 6.0 |
 
 ## Modules
 
 | Name | Source | Version |
-| ---- | ------ | ------- |
+|------|--------|---------|
 | <a name="module_aws_lb_controller_pod_identity"></a> [aws\_lb\_controller\_pod\_identity](#module\_aws\_lb\_controller\_pod\_identity) | terraform-aws-modules/eks-pod-identity/aws | 2.7.0 |
 | <a name="module_cluster_autoscaler_pod_identity"></a> [cluster\_autoscaler\_pod\_identity](#module\_cluster\_autoscaler\_pod\_identity) | terraform-aws-modules/eks-pod-identity/aws | 2.7.0 |
 | <a name="module_ebs_csi_pod_identity"></a> [ebs\_csi\_pod\_identity](#module\_ebs\_csi\_pod\_identity) | terraform-aws-modules/eks-pod-identity/aws | 2.7.0 |
@@ -115,7 +115,7 @@ module "cluster" {
 ## Resources
 
 | Name | Type |
-| ---- | ---- |
+|------|------|
 | [aws_s3_bucket.longhorn_backup](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
 | [aws_s3_bucket_public_access_block.longhorn_backup](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
 | [aws_s3_bucket_server_side_encryption_configuration.longhorn_backup](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_server_side_encryption_configuration) | resource |
@@ -127,7 +127,7 @@ module "cluster" {
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-| ---- | ----------- | ---- | ------- | :------: |
+|------|-------------|------|---------|:--------:|
 | <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | List of availability zones to use. If not specified, automatically selects up to 3 available AZs in the region. | `list(string)` | `[]` | no |
 | <a name="input_cluster_enabled_log_types"></a> [cluster\_enabled\_log\_types](#input\_cluster\_enabled\_log\_types) | List of control plane logging types to enable. Default: ['authenticator']. Valid values: api, audit, authenticator, controllerManager, scheduler | `list(string)` | <pre>[<br/>  "authenticator"<br/>]</pre> | no |
 | <a name="input_create_iam_roles"></a> [create\_iam\_roles](#input\_create\_iam\_roles) | Whether to create new IAM roles for the EKS cluster and node groups. If false, existing\_cluster\_iam\_role\_arn and existing\_node\_iam\_role\_arn must be provided. | `bool` | `true` | no |
@@ -168,7 +168,7 @@ module "cluster" {
 ## Outputs
 
 | Name | Description |
-| ---- | ----------- |
+|------|-------------|
 | <a name="output_aws_load_balancer_controller_role_arn"></a> [aws\_load\_balancer\_controller\_role\_arn](#output\_aws\_load\_balancer\_controller\_role\_arn) | IAM role ARN for the AWS Load Balancer Controller pod identity association (null if enable\_aws\_load\_balancer\_controller\_pod\_identity is false) |
 | <a name="output_cluster_arn"></a> [cluster\_arn](#output\_cluster\_arn) | The Amazon Resource Name (ARN) of the cluster |
 | <a name="output_cluster_autoscaler_role_arn"></a> [cluster\_autoscaler\_role\_arn](#output\_cluster\_autoscaler\_role\_arn) | IAM role ARN for the Cluster Autoscaler pod identity association (null if enable\_cluster\_autoscaler\_pod\_identity is false) |
