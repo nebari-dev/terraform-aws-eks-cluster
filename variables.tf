@@ -310,9 +310,14 @@ variable "longhorn_backup_bucket_create" {
 }
 
 variable "longhorn_backup_bucket_name" {
-  description = "Name of the Longhorn backup S3 bucket. Required when longhorn_backup_bucket_create is true."
+  description = "Name of the Longhorn backup S3 bucket. Required when longhorn_backup_bucket_create or enable_longhorn_backup_pod_identity is true."
   type        = string
   default     = ""
+
+  validation {
+    condition     = !(var.longhorn_backup_bucket_create || var.enable_longhorn_backup_pod_identity) || length(var.longhorn_backup_bucket_name) > 0
+    error_message = "longhorn_backup_bucket_name must be set when longhorn_backup_bucket_create or enable_longhorn_backup_pod_identity is true."
+  }
 }
 
 variable "longhorn_backup_bucket_force_destroy" {
@@ -321,7 +326,7 @@ variable "longhorn_backup_bucket_force_destroy" {
   default     = false
 }
 
-variable "longhorn_backup_pod_identity_enable" {
+variable "enable_longhorn_backup_pod_identity" {
   description = "Provision an EKS Pod Identity association granting Longhorn's service account (longhorn-service-account in longhorn-system) scoped S3 access to the backup bucket, so Longhorn backs up without static credentials. Requires longhorn_backup_bucket_name (created here or pre-existing)."
   type        = bool
   default     = false

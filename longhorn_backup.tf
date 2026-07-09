@@ -59,7 +59,7 @@ module "longhorn_backup_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
   version = "2.7.0"
 
-  count = var.longhorn_backup_pod_identity_enable ? 1 : 0
+  count = var.enable_longhorn_backup_pod_identity ? 1 : 0
 
   name = "${var.project_name}-longhorn-backup"
 
@@ -69,7 +69,7 @@ module "longhorn_backup_pod_identity" {
     {
       sid       = "LonghornBackupBucket"
       actions   = ["s3:ListBucket", "s3:GetBucketLocation"]
-      resources = ["arn:aws:s3:::${var.longhorn_backup_bucket_name}"]
+      resources = ["arn:${data.aws_partition.current.partition}:s3:::${var.longhorn_backup_bucket_name}"]
     },
     {
       sid = "LonghornBackupObjects"
@@ -80,7 +80,7 @@ module "longhorn_backup_pod_identity" {
         "s3:ListMultipartUploadParts",
         "s3:AbortMultipartUpload",
       ]
-      resources = ["arn:aws:s3:::${var.longhorn_backup_bucket_name}/*"]
+      resources = ["arn:${data.aws_partition.current.partition}:s3:::${var.longhorn_backup_bucket_name}/*"]
     },
   ]
 

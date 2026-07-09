@@ -130,6 +130,11 @@ output "kubeconfig_command" {
 # Longhorn backup
 ################################################################################
 output "longhorn_backup_bucket" {
-  description = "Name of the Longhorn backup S3 bucket; empty when not created."
-  value       = var.longhorn_backup_bucket_create ? aws_s3_bucket.longhorn_backup[0].id : ""
+  description = "Name of the Longhorn backup S3 bucket (null if not created)"
+  value       = one(aws_s3_bucket.longhorn_backup[*].id)
+}
+
+output "longhorn_backup_role_arn" {
+  description = "IAM role ARN for the Longhorn backup pod identity association (null if enable_longhorn_backup_pod_identity is false)"
+  value       = one(module.longhorn_backup_pod_identity[*].iam_role_arn)
 }

@@ -86,20 +86,20 @@ module "cluster" {
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.0 |
 
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | >= 6.0 |
 
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_aws_lb_controller_pod_identity"></a> [aws\_lb\_controller\_pod\_identity](#module\_aws\_lb\_controller\_pod\_identity) | terraform-aws-modules/eks-pod-identity/aws | 2.7.0 |
 | <a name="module_cluster_autoscaler_pod_identity"></a> [cluster\_autoscaler\_pod\_identity](#module\_cluster\_autoscaler\_pod\_identity) | terraform-aws-modules/eks-pod-identity/aws | 2.7.0 |
 | <a name="module_ebs_csi_pod_identity"></a> [ebs\_csi\_pod\_identity](#module\_ebs\_csi\_pod\_identity) | terraform-aws-modules/eks-pod-identity/aws | 2.7.0 |
@@ -115,18 +115,19 @@ module "cluster" {
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [aws_s3_bucket.longhorn_backup](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
 | [aws_s3_bucket_public_access_block.longhorn_backup](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
 | [aws_s3_bucket_server_side_encryption_configuration.longhorn_backup](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_server_side_encryption_configuration) | resource |
 | [aws_s3_bucket_versioning.longhorn_backup](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_versioning) | resource |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
+| [aws_partition.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/partition) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | List of availability zones to use. If not specified, automatically selects up to 3 available AZs in the region. | `list(string)` | `[]` | no |
 | <a name="input_cluster_enabled_log_types"></a> [cluster\_enabled\_log\_types](#input\_cluster\_enabled\_log\_types) | List of control plane logging types to enable. Default: ['authenticator']. Valid values: api, audit, authenticator, controllerManager, scheduler | `list(string)` | <pre>[<br/>  "authenticator"<br/>]</pre> | no |
 | <a name="input_create_iam_roles"></a> [create\_iam\_roles](#input\_create\_iam\_roles) | Whether to create new IAM roles for the EKS cluster and node groups. If false, existing\_cluster\_iam\_role\_arn and existing\_node\_iam\_role\_arn must be provided. | `bool` | `true` | no |
@@ -143,6 +144,7 @@ module "cluster" {
 | <a name="input_enable_cluster_autoscaler_pod_identity"></a> [enable\_cluster\_autoscaler\_pod\_identity](#input\_enable\_cluster\_autoscaler\_pod\_identity) | Whether to provision the IAM role and EKS Pod Identity association for the Kubernetes Cluster Autoscaler. The role is bound to the `cluster-autoscaler` service account in `kube-system`. The autoscaler itself is not installed by this module and consumers are expected to install the Helm chart after cluster creation. If you set this to false, you will need to create your own IAM role and pod identity association. | `bool` | `true` | no |
 | <a name="input_enable_cluster_creator_admin_permissions"></a> [enable\_cluster\_creator\_admin\_permissions](#input\_enable\_cluster\_creator\_admin\_permissions) | Whether to grant admin permissions to the IAM user or role that creates the EKS cluster. This allows the creator to manage the cluster after creation. | `bool` | `false` | no |
 | <a name="input_enable_irsa"></a> [enable\_irsa](#input\_enable\_irsa) | Whether to create the EKS OIDC provider for IAM Roles for Service Accounts. Set to false when the cluster relies exclusively on EKS Pod Identity, or when the VPC cannot resolve `oidc.eks.<region>.amazonaws.com` (a fully-private deployment with no public DNS resolution). When false, the upstream EKS module skips both the certificate-thumbprint fetch and the `aws_iam_openid_connect_provider` resource. | `bool` | `true` | no |
+| <a name="input_enable_longhorn_backup_pod_identity"></a> [enable\_longhorn\_backup\_pod\_identity](#input\_enable\_longhorn\_backup\_pod\_identity) | Provision an EKS Pod Identity association granting Longhorn's service account (longhorn-service-account in longhorn-system) scoped S3 access to the backup bucket, so Longhorn backs up without static credentials. Requires longhorn\_backup\_bucket\_name (created here or pre-existing). | `bool` | `false` | no |
 | <a name="input_endpoint_private_access"></a> [endpoint\_private\_access](#input\_endpoint\_private\_access) | Indicates whether the Amazon EKS private API server endpoint is enabled. | `bool` | `true` | no |
 | <a name="input_endpoint_public_access"></a> [endpoint\_public\_access](#input\_endpoint\_public\_access) | Indicates whether the Amazon EKS public API server endpoint is enabled. | `bool` | `false` | no |
 | <a name="input_endpoint_public_access_cidrs"></a> [endpoint\_public\_access\_cidrs](#input\_endpoint\_public\_access\_cidrs) | List of CIDR blocks which can access the Amazon EKS public API server endpoint. | `list(string)` | <pre>[<br/>  "0.0.0.0/0"<br/>]</pre> | no |
@@ -156,8 +158,7 @@ module "cluster" {
 | <a name="input_kubernetes_version"></a> [kubernetes\_version](#input\_kubernetes\_version) | Kubernetes `<major>.<minor>` version to use for the EKS cluster (i.e.: `1.33`) | `string` | `null` | no |
 | <a name="input_longhorn_backup_bucket_create"></a> [longhorn\_backup\_bucket\_create](#input\_longhorn\_backup\_bucket\_create) | Create an S3 bucket for Longhorn off-cluster backups. | `bool` | `false` | no |
 | <a name="input_longhorn_backup_bucket_force_destroy"></a> [longhorn\_backup\_bucket\_force\_destroy](#input\_longhorn\_backup\_bucket\_force\_destroy) | Allow `terraform destroy` to delete a non-empty Longhorn backup bucket. When false, a non-empty bucket blocks deletion, protecting existing backups. | `bool` | `false` | no |
-| <a name="input_longhorn_backup_bucket_name"></a> [longhorn\_backup\_bucket\_name](#input\_longhorn\_backup\_bucket\_name) | Name of the Longhorn backup S3 bucket. Required when longhorn\_backup\_bucket\_create is true. | `string` | `""` | no |
-| <a name="input_longhorn_backup_pod_identity_enable"></a> [longhorn\_backup\_pod\_identity\_enable](#input\_longhorn\_backup\_pod\_identity\_enable) | Provision an EKS Pod Identity association granting Longhorn's service account (longhorn-service-account in longhorn-system) scoped S3 access to the backup bucket, so Longhorn backs up without static credentials. Requires longhorn\_backup\_bucket\_name (created here or pre-existing). | `bool` | `false` | no |
+| <a name="input_longhorn_backup_bucket_name"></a> [longhorn\_backup\_bucket\_name](#input\_longhorn\_backup\_bucket\_name) | Name of the Longhorn backup S3 bucket. Required when longhorn\_backup\_bucket\_create or enable\_longhorn\_backup\_pod\_identity is true. | `string` | `""` | no |
 | <a name="input_node_groups"></a> [node\_groups](#input\_node\_groups) | Map of node groups to create. Each node group supports the following attributes:<br/>- instance (required): EC2 instance type (e.g., "m5.xlarge")<br/>- min\_nodes: Minimum number of nodes (default: 0)<br/>- max\_nodes: Maximum number of nodes (default: 1)<br/>- ami\_type: Override AMI type (AL2023\_x86\_64\_STANDARD, AL2023\_ARM\_64\_STANDARD, AL2023\_x86\_64\_NVIDIA, etc.)<br/>- spot: Use Spot instances for cost savings (default: false)<br/>- disk\_size: Root disk size in GB (default: 20)<br/>- labels: Map of Kubernetes labels to apply to nodes (default: {})<br/>- taints: List of Kubernetes taints with keys: key, value, effect | <pre>map(object({<br/>    instance  = string<br/>    min_nodes = optional(number, 0)<br/>    max_nodes = optional(number, 1)<br/>    ami_type  = optional(string, "AL2023_x86_64_STANDARD")<br/>    spot      = optional(bool, false)<br/>    disk_size = optional(number, null)<br/>    labels    = optional(map(string), {})<br/>    taints = optional(list(object({<br/>      key    = string<br/>      value  = string<br/>      effect = string # NO_SCHEDULE, NO_EXECUTE, or PREFER_NO_SCHEDULE<br/>    })), [])<br/>  }))</pre> | n/a | yes |
 | <a name="input_node_security_group_additional_rules"></a> [node\_security\_group\_additional\_rules](#input\_node\_security\_group\_additional\_rules) | Additional security group rules to add to the node security group created by the EKS module. Set source\_cluster\_security\_group = true to allow traffic from the cluster security group. | `any` | `{}` | no |
 | <a name="input_project_name"></a> [project\_name](#input\_project\_name) | The name of the project. | `string` | n/a | yes |
@@ -167,7 +168,7 @@ module "cluster" {
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_aws_load_balancer_controller_role_arn"></a> [aws\_load\_balancer\_controller\_role\_arn](#output\_aws\_load\_balancer\_controller\_role\_arn) | IAM role ARN for the AWS Load Balancer Controller pod identity association (null if enable\_aws\_load\_balancer\_controller\_pod\_identity is false) |
 | <a name="output_cluster_arn"></a> [cluster\_arn](#output\_cluster\_arn) | The Amazon Resource Name (ARN) of the cluster |
 | <a name="output_cluster_autoscaler_role_arn"></a> [cluster\_autoscaler\_role\_arn](#output\_cluster\_autoscaler\_role\_arn) | IAM role ARN for the Cluster Autoscaler pod identity association (null if enable\_cluster\_autoscaler\_pod\_identity is false) |
@@ -183,7 +184,8 @@ module "cluster" {
 | <a name="output_efs_dns_name"></a> [efs\_dns\_name](#output\_efs\_dns\_name) | The DNS name of the EFS file system (null if EFS not enabled) |
 | <a name="output_efs_id"></a> [efs\_id](#output\_efs\_id) | The ID of the EFS file system (null if EFS not enabled) |
 | <a name="output_kubeconfig_command"></a> [kubeconfig\_command](#output\_kubeconfig\_command) | Command to update kubeconfig |
-| <a name="output_longhorn_backup_bucket"></a> [longhorn\_backup\_bucket](#output\_longhorn\_backup\_bucket) | Name of the Longhorn backup S3 bucket; empty when not created. |
+| <a name="output_longhorn_backup_bucket"></a> [longhorn\_backup\_bucket](#output\_longhorn\_backup\_bucket) | Name of the Longhorn backup S3 bucket (null if not created) |
+| <a name="output_longhorn_backup_role_arn"></a> [longhorn\_backup\_role\_arn](#output\_longhorn\_backup\_role\_arn) | IAM role ARN for the Longhorn backup pod identity association (null if enable\_longhorn\_backup\_pod\_identity is false) |
 | <a name="output_node_groups"></a> [node\_groups](#output\_node\_groups) | Outputs from EKS node groups |
 | <a name="output_node_iam_role_arn"></a> [node\_iam\_role\_arn](#output\_node\_iam\_role\_arn) | IAM role ARN used by EKS node groups |
 | <a name="output_node_security_group_id"></a> [node\_security\_group\_id](#output\_node\_security\_group\_id) | ID of the node shared security group |
