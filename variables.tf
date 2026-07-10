@@ -320,6 +320,12 @@ variable "longhorn_backup_bucket_name" {
   }
 }
 
+variable "longhorn_backup_noncurrent_version_expiration_days" {
+  description = "Days after which noncurrent (deleted or overwritten) Longhorn backup object versions are permanently removed. Acts as the recovery window for accidentally deleted backups."
+  type        = number
+  default     = 30
+}
+
 variable "longhorn_backup_bucket_force_destroy" {
   description = "Allow `terraform destroy` to delete a non-empty Longhorn backup bucket. When false, a non-empty bucket blocks deletion, protecting existing backups."
   type        = bool

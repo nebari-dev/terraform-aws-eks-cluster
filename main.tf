@@ -226,6 +226,27 @@ module "vpc_endpoints" {
   tags = var.tags
 }
 
+# Optional S3 bucket and EKS Pod Identity association for Longhorn off-cluster
+# backups. Disabled by default; enabled by consumers (e.g. Nebari
+# Infrastructure Core) that schedule Longhorn snapshots/backups to S3.
+module "longhorn_backup" {
+  source = "./modules/longhorn-backup"
+
+  count = var.longhorn_backup_bucket_create || var.enable_longhorn_backup_pod_identity ? 1 : 0
+
+  project_name = var.project_name
+
+  create_bucket                      = var.longhorn_backup_bucket_create
+  bucket_name                        = var.longhorn_backup_bucket_name
+  force_destroy                      = var.longhorn_backup_bucket_force_destroy
+  noncurrent_version_expiration_days = var.longhorn_backup_noncurrent_version_expiration_days
+
+  enable_pod_identity = var.enable_longhorn_backup_pod_identity
+  cluster_name        = module.eks.cluster_name
+
+  tags = var.tags
+}
+
 module "efs" {
   source  = "terraform-aws-modules/efs/aws"
   version = "2.0.0"

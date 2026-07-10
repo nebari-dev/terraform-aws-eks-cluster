@@ -107,7 +107,7 @@ module "cluster" {
 | <a name="module_efs_csi_pod_identity"></a> [efs\_csi\_pod\_identity](#module\_efs\_csi\_pod\_identity) | terraform-aws-modules/eks-pod-identity/aws | 2.7.0 |
 | <a name="module_eks"></a> [eks](#module\_eks) | terraform-aws-modules/eks/aws | 21.11.0 |
 | <a name="module_iam"></a> [iam](#module\_iam) | ./modules/iam | n/a |
-| <a name="module_longhorn_backup_pod_identity"></a> [longhorn\_backup\_pod\_identity](#module\_longhorn\_backup\_pod\_identity) | terraform-aws-modules/eks-pod-identity/aws | 2.7.0 |
+| <a name="module_longhorn_backup"></a> [longhorn\_backup](#module\_longhorn\_backup) | ./modules/longhorn-backup | n/a |
 | <a name="module_node_userdata"></a> [node\_userdata](#module\_node\_userdata) | ./modules/userdata | n/a |
 | <a name="module_vpc"></a> [vpc](#module\_vpc) | terraform-aws-modules/vpc/aws | 6.5.1 |
 | <a name="module_vpc_endpoints"></a> [vpc\_endpoints](#module\_vpc\_endpoints) | ./modules/vpc-endpoints | n/a |
@@ -116,12 +116,7 @@ module "cluster" {
 
 | Name | Type |
 |------|------|
-| [aws_s3_bucket.longhorn_backup](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
-| [aws_s3_bucket_public_access_block.longhorn_backup](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
-| [aws_s3_bucket_server_side_encryption_configuration.longhorn_backup](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_server_side_encryption_configuration) | resource |
-| [aws_s3_bucket_versioning.longhorn_backup](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_versioning) | resource |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
-| [aws_partition.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/partition) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 
 ## Inputs
@@ -159,6 +154,7 @@ module "cluster" {
 | <a name="input_longhorn_backup_bucket_create"></a> [longhorn\_backup\_bucket\_create](#input\_longhorn\_backup\_bucket\_create) | Create an S3 bucket for Longhorn off-cluster backups. | `bool` | `false` | no |
 | <a name="input_longhorn_backup_bucket_force_destroy"></a> [longhorn\_backup\_bucket\_force\_destroy](#input\_longhorn\_backup\_bucket\_force\_destroy) | Allow `terraform destroy` to delete a non-empty Longhorn backup bucket. When false, a non-empty bucket blocks deletion, protecting existing backups. | `bool` | `false` | no |
 | <a name="input_longhorn_backup_bucket_name"></a> [longhorn\_backup\_bucket\_name](#input\_longhorn\_backup\_bucket\_name) | Name of the Longhorn backup S3 bucket. Required when longhorn\_backup\_bucket\_create or enable\_longhorn\_backup\_pod\_identity is true. | `string` | `""` | no |
+| <a name="input_longhorn_backup_noncurrent_version_expiration_days"></a> [longhorn\_backup\_noncurrent\_version\_expiration\_days](#input\_longhorn\_backup\_noncurrent\_version\_expiration\_days) | Days after which noncurrent (deleted or overwritten) Longhorn backup object versions are permanently removed. Acts as the recovery window for accidentally deleted backups. | `number` | `30` | no |
 | <a name="input_node_groups"></a> [node\_groups](#input\_node\_groups) | Map of node groups to create. Each node group supports the following attributes:<br/>- instance (required): EC2 instance type (e.g., "m5.xlarge")<br/>- min\_nodes: Minimum number of nodes (default: 0)<br/>- max\_nodes: Maximum number of nodes (default: 1)<br/>- ami\_type: Override AMI type (AL2023\_x86\_64\_STANDARD, AL2023\_ARM\_64\_STANDARD, AL2023\_x86\_64\_NVIDIA, etc.)<br/>- spot: Use Spot instances for cost savings (default: false)<br/>- disk\_size: Root disk size in GB (default: 20)<br/>- labels: Map of Kubernetes labels to apply to nodes (default: {})<br/>- taints: List of Kubernetes taints with keys: key, value, effect | <pre>map(object({<br/>    instance  = string<br/>    min_nodes = optional(number, 0)<br/>    max_nodes = optional(number, 1)<br/>    ami_type  = optional(string, "AL2023_x86_64_STANDARD")<br/>    spot      = optional(bool, false)<br/>    disk_size = optional(number, null)<br/>    labels    = optional(map(string), {})<br/>    taints = optional(list(object({<br/>      key    = string<br/>      value  = string<br/>      effect = string # NO_SCHEDULE, NO_EXECUTE, or PREFER_NO_SCHEDULE<br/>    })), [])<br/>  }))</pre> | n/a | yes |
 | <a name="input_node_security_group_additional_rules"></a> [node\_security\_group\_additional\_rules](#input\_node\_security\_group\_additional\_rules) | Additional security group rules to add to the node security group created by the EKS module. Set source\_cluster\_security\_group = true to allow traffic from the cluster security group. | `any` | `{}` | no |
 | <a name="input_project_name"></a> [project\_name](#input\_project\_name) | The name of the project. | `string` | n/a | yes |

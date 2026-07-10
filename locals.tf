@@ -4,8 +4,6 @@ data "aws_availability_zones" "available" {
 
 data "aws_region" "current" {}
 
-data "aws_partition" "current" {}
-
 locals {
 
   # Determine availability zones to use. If not specified, select up to 3 available AZs in the region.
