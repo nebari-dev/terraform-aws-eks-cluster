@@ -1,6 +1,6 @@
 # Complete example
 
-This example provisions a complete Amazon EKS cluster with multiple node groups, all required networking components (including a VPC, public and private subnets, VPC endpoints, NAT gateways, Internet Gateway, and security groups), IAM roles, and an EFS file system.
+This example provisions a complete Amazon EKS cluster with multiple node groups, all required networking components (including a VPC, public and private subnets, VPC endpoints, NAT gateways, Internet Gateway, and security groups), IAM roles, an EFS file system, and an S3 bucket with a Pod Identity association for Longhorn off-cluster backups.
 
 ## Usage
 

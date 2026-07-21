@@ -299,3 +299,41 @@ variable "efs_kms_key_arn" {
   type        = string
   default     = null
 }
+
+################################################################################
+# Longhorn backup bucket
+################################################################################
+variable "longhorn_backup_bucket_create" {
+  description = "Create an S3 bucket for Longhorn off-cluster backups."
+  type        = bool
+  default     = false
+}
+
+variable "longhorn_backup_bucket_name" {
+  description = "Name of the Longhorn backup S3 bucket. Required when longhorn_backup_bucket_create or enable_longhorn_backup_pod_identity is true."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = !(var.longhorn_backup_bucket_create || var.enable_longhorn_backup_pod_identity) || length(var.longhorn_backup_bucket_name) > 0
+    error_message = "longhorn_backup_bucket_name must be set when longhorn_backup_bucket_create or enable_longhorn_backup_pod_identity is true."
+  }
+}
+
+variable "longhorn_backup_noncurrent_version_expiration_days" {
+  description = "Days after which noncurrent (deleted or overwritten) Longhorn backup object versions are permanently removed. Acts as the recovery window for accidentally deleted backups."
+  type        = number
+  default     = 30
+}
+
+variable "longhorn_backup_bucket_force_destroy" {
+  description = "Allow `terraform destroy` to delete a non-empty Longhorn backup bucket. When false, a non-empty bucket blocks deletion, protecting existing backups."
+  type        = bool
+  default     = false
+}
+
+variable "enable_longhorn_backup_pod_identity" {
+  description = "Provision an EKS Pod Identity association granting Longhorn's service account (longhorn-service-account in longhorn-system) scoped S3 access to the backup bucket, so Longhorn backs up without static credentials. Requires longhorn_backup_bucket_name (created here or pre-existing)."
+  type        = bool
+  default     = false
+}

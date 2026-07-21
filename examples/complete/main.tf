@@ -43,6 +43,14 @@ module "cluster" {
   efs_throughput_mode  = "elastic"
   efs_encrypted        = true
 
+  # Longhorn backup configuration
+  # Bucket names must be lowercase; the terratest suite passes a mixed-case
+  # random project_name. force_destroy lets test teardown delete the bucket.
+  longhorn_backup_bucket_create        = true
+  longhorn_backup_bucket_name          = lower("${var.project_name}-longhorn-backup")
+  longhorn_backup_bucket_force_destroy = true
+  enable_longhorn_backup_pod_identity  = true
+
   # Node security group rules
   node_security_group_additional_rules = {
     longhorn_webhook_admission = {

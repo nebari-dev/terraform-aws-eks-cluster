@@ -94,6 +94,16 @@ output "efs_csi_driver_role_arn" {
   value       = module.cluster.efs_csi_driver_role_arn
 }
 
+output "longhorn_backup_bucket" {
+  description = "Name of the Longhorn backup S3 bucket (null if not created)"
+  value       = module.cluster.longhorn_backup_bucket
+}
+
+output "longhorn_backup_role_arn" {
+  description = "IAM role ARN for the Longhorn backup pod identity association (null if enable_longhorn_backup_pod_identity is false)"
+  value       = module.cluster.longhorn_backup_role_arn
+}
+
 output "kubeconfig_command" {
   description = "Command to update kubeconfig"
   value       = module.cluster.kubeconfig_command
