@@ -64,12 +64,12 @@ locals {
       capacity_type  = config.spot ? "SPOT" : "ON_DEMAND"
       ami_type       = config.ami_type
 
-      # Don't track the latest AMI from SSM: the upstream default re-resolves it
-      # on every plan, so any apply after AWS publishes a new AMI rolls every
-      # node group. With this off and no pin, release_version is left unset and
-      # the provider keeps whatever release the group is already running.
-      use_latest_ami_release_version = false
-      ami_release_version            = config.ami_release_version
+      # Only track the latest AMI from SSM when asked to with "latest": it is
+      # re-resolved on every plan, so any apply after AWS publishes a new AMI
+      # rolls the group. Unpinned, release_version is left unset and the
+      # provider keeps whatever release the group is already running.
+      use_latest_ami_release_version = config.ami_release_version == "latest"
+      ami_release_version            = config.ami_release_version == "latest" ? null : config.ami_release_version
 
       # disk_size must be set via block_device_mappings because the upstream EKS
       # module creates a custom launch template by default, which causes the
