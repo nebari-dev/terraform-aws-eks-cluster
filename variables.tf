@@ -337,3 +337,46 @@ variable "enable_longhorn_backup_pod_identity" {
   type        = bool
   default     = false
 }
+
+################################################################################
+# FSx for OpenZFS
+################################################################################
+variable "fsx_openzfs_single_az_enabled" {
+  description = "Create a SINGLE_AZ_2 FSx for OpenZFS filesystem, plus the NFS security group and the CSI controller's Pod Identity."
+  type        = bool
+  default     = false
+}
+
+variable "fsx_openzfs_multi_az_enabled" {
+  description = "Create a MULTI_AZ_1 FSx for OpenZFS filesystem across the first two private subnets, plus the NFS security group and the CSI controller's Pod Identity."
+  type        = bool
+  default     = false
+}
+
+variable "fsx_openzfs_storage_capacity" {
+  description = "Storage capacity of each FSx for OpenZFS filesystem in GiB. FSx for OpenZFS has a 64 GiB floor."
+  type        = number
+  default     = 64
+
+  validation {
+    condition     = var.fsx_openzfs_storage_capacity >= 64
+    error_message = "fsx_openzfs_storage_capacity must be at least 64 GiB."
+  }
+}
+
+variable "fsx_openzfs_throughput" {
+  description = "Provisioned throughput of each FSx for OpenZFS filesystem in MBps. 160 is the floor shared by SINGLE_AZ_2 and MULTI_AZ_1."
+  type        = number
+  default     = 160
+}
+
+variable "fsx_openzfs_compression" {
+  description = "ZFS compression on the FSx for OpenZFS root volume: LZ4, ZSTD or NONE."
+  type        = string
+  default     = "LZ4"
+
+  validation {
+    condition     = contains(["LZ4", "ZSTD", "NONE"], var.fsx_openzfs_compression)
+    error_message = "fsx_openzfs_compression must be one of LZ4, ZSTD or NONE."
+  }
+}
