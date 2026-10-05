@@ -247,6 +247,30 @@ module "longhorn_backup" {
   tags = var.tags
 }
 
+# Optional FSx for OpenZFS filesystems (Single-AZ and/or Multi-AZ), their NFS
+# security group, and the CSI controller's Pod Identity. Disabled by default;
+# enabled by consumers (e.g. Nebari Infrastructure Core) that install the FSx
+# for OpenZFS CSI driver and point StorageClasses at the root volume outputs.
+module "fsx_openzfs" {
+  source = "./modules/fsx-openzfs"
+
+  count = var.fsx_openzfs_single_az_enabled || var.fsx_openzfs_multi_az_enabled ? 1 : 0
+
+  project_name           = var.project_name
+  cluster_name           = module.eks.cluster_name
+  vpc_id                 = var.create_vpc ? one(module.vpc[*].vpc_id) : var.existing_vpc_id
+  subnet_ids             = local.private_subnet_ids
+  node_security_group_id = module.eks.node_security_group_id
+
+  single_az_enabled = var.fsx_openzfs_single_az_enabled
+  multi_az_enabled  = var.fsx_openzfs_multi_az_enabled
+  storage_capacity  = var.fsx_openzfs_storage_capacity
+  throughput        = var.fsx_openzfs_throughput
+  compression       = var.fsx_openzfs_compression
+
+  tags = var.tags
+}
+
 module "efs" {
   source  = "terraform-aws-modules/efs/aws"
   version = "2.0.0"

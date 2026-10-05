@@ -106,6 +106,7 @@ module "cluster" {
 | <a name="module_efs"></a> [efs](#module\_efs) | terraform-aws-modules/efs/aws | 2.0.0 |
 | <a name="module_efs_csi_pod_identity"></a> [efs\_csi\_pod\_identity](#module\_efs\_csi\_pod\_identity) | terraform-aws-modules/eks-pod-identity/aws | 2.7.0 |
 | <a name="module_eks"></a> [eks](#module\_eks) | terraform-aws-modules/eks/aws | 21.11.0 |
+| <a name="module_fsx_openzfs"></a> [fsx\_openzfs](#module\_fsx\_openzfs) | ./modules/fsx-openzfs | n/a |
 | <a name="module_iam"></a> [iam](#module\_iam) | ./modules/iam | n/a |
 | <a name="module_longhorn_backup"></a> [longhorn\_backup](#module\_longhorn\_backup) | ./modules/longhorn-backup | n/a |
 | <a name="module_node_userdata"></a> [node\_userdata](#module\_node\_userdata) | ./modules/userdata | n/a |
@@ -149,6 +150,11 @@ module "cluster" {
 | <a name="input_existing_security_group_id"></a> [existing\_security\_group\_id](#input\_existing\_security\_group\_id) | ID of an existing security group to use. Required when create\_security\_group is false. | `string` | `null` | no |
 | <a name="input_existing_vpc_id"></a> [existing\_vpc\_id](#input\_existing\_vpc\_id) | ID of an existing VPC to use. Required when create\_vpc is false. | `string` | `null` | no |
 | <a name="input_extra_ca_bundle"></a> [extra\_ca\_bundle](#input\_extra\_ca\_bundle) | Optional base64-encoded PEM bundle to install into each worker node's OS trust store before<br/>the EKS bootstrap runs. Required when nodes must reach the EKS control plane, ECR, or pull<br/>container images through a TLS-inspecting egress proxy. For AL2023 nodes the bundle is<br/>written to /etc/pki/ca-trust/source/anchors/org-ca.crt and `update-ca-trust extract` is run.<br/>For Bottlerocket nodes the bundle is configured via `settings.pki.org-ca` with `trusted = true`.<br/>Leave unset to make no changes to the node trust store. | `string` | `null` | no |
+| <a name="input_fsx_openzfs_compression"></a> [fsx\_openzfs\_compression](#input\_fsx\_openzfs\_compression) | ZFS compression on the FSx for OpenZFS root volume: LZ4, ZSTD or NONE. | `string` | `"LZ4"` | no |
+| <a name="input_fsx_openzfs_multi_az_enabled"></a> [fsx\_openzfs\_multi\_az\_enabled](#input\_fsx\_openzfs\_multi\_az\_enabled) | Create a MULTI\_AZ\_1 FSx for OpenZFS filesystem across the first two private subnets, plus the NFS security group and the CSI controller's Pod Identity. | `bool` | `false` | no |
+| <a name="input_fsx_openzfs_single_az_enabled"></a> [fsx\_openzfs\_single\_az\_enabled](#input\_fsx\_openzfs\_single\_az\_enabled) | Create a SINGLE\_AZ\_2 FSx for OpenZFS filesystem, plus the NFS security group and the CSI controller's Pod Identity. | `bool` | `false` | no |
+| <a name="input_fsx_openzfs_storage_capacity"></a> [fsx\_openzfs\_storage\_capacity](#input\_fsx\_openzfs\_storage\_capacity) | Storage capacity of each FSx for OpenZFS filesystem in GiB. FSx for OpenZFS has a 64 GiB floor. | `number` | `64` | no |
+| <a name="input_fsx_openzfs_throughput"></a> [fsx\_openzfs\_throughput](#input\_fsx\_openzfs\_throughput) | Provisioned throughput of each FSx for OpenZFS filesystem in MBps. 160 is the floor shared by SINGLE\_AZ\_2 and MULTI\_AZ\_1. | `number` | `160` | no |
 | <a name="input_iam_role_permissions_boundary"></a> [iam\_role\_permissions\_boundary](#input\_iam\_role\_permissions\_boundary) | The ARN of the policy that is used to set the permissions boundary for IAM roles created by this module. | `string` | `null` | no |
 | <a name="input_kubernetes_version"></a> [kubernetes\_version](#input\_kubernetes\_version) | Kubernetes `<major>.<minor>` version to use for the EKS cluster (i.e.: `1.33`) | `string` | `null` | no |
 | <a name="input_longhorn_backup_bucket_create"></a> [longhorn\_backup\_bucket\_create](#input\_longhorn\_backup\_bucket\_create) | Create an S3 bucket for Longhorn off-cluster backups. | `bool` | `false` | no |
@@ -179,6 +185,12 @@ module "cluster" {
 | <a name="output_efs_csi_driver_role_arn"></a> [efs\_csi\_driver\_role\_arn](#output\_efs\_csi\_driver\_role\_arn) | IAM role ARN for the EFS CSI driver (null if EFS not enabled) |
 | <a name="output_efs_dns_name"></a> [efs\_dns\_name](#output\_efs\_dns\_name) | The DNS name of the EFS file system (null if EFS not enabled) |
 | <a name="output_efs_id"></a> [efs\_id](#output\_efs\_id) | The ID of the EFS file system (null if EFS not enabled) |
+| <a name="output_fsx_openzfs_multi_az_dns_name"></a> [fsx\_openzfs\_multi\_az\_dns\_name](#output\_fsx\_openzfs\_multi\_az\_dns\_name) | DNS name of the Multi-AZ FSx for OpenZFS filesystem; empty when disabled |
+| <a name="output_fsx_openzfs_multi_az_id"></a> [fsx\_openzfs\_multi\_az\_id](#output\_fsx\_openzfs\_multi\_az\_id) | Filesystem ID of the Multi-AZ FSx for OpenZFS filesystem; empty when disabled |
+| <a name="output_fsx_openzfs_multi_az_root_volume_id"></a> [fsx\_openzfs\_multi\_az\_root\_volume\_id](#output\_fsx\_openzfs\_multi\_az\_root\_volume\_id) | Root volume ID of the Multi-AZ FSx for OpenZFS filesystem, used as the CSI parent volume; empty when disabled |
+| <a name="output_fsx_openzfs_single_az_dns_name"></a> [fsx\_openzfs\_single\_az\_dns\_name](#output\_fsx\_openzfs\_single\_az\_dns\_name) | DNS name of the Single-AZ FSx for OpenZFS filesystem; empty when disabled |
+| <a name="output_fsx_openzfs_single_az_id"></a> [fsx\_openzfs\_single\_az\_id](#output\_fsx\_openzfs\_single\_az\_id) | Filesystem ID of the Single-AZ FSx for OpenZFS filesystem; empty when disabled |
+| <a name="output_fsx_openzfs_single_az_root_volume_id"></a> [fsx\_openzfs\_single\_az\_root\_volume\_id](#output\_fsx\_openzfs\_single\_az\_root\_volume\_id) | Root volume ID of the Single-AZ FSx for OpenZFS filesystem, used as the CSI parent volume; empty when disabled |
 | <a name="output_kubeconfig_command"></a> [kubeconfig\_command](#output\_kubeconfig\_command) | Command to update kubeconfig |
 | <a name="output_longhorn_backup_bucket"></a> [longhorn\_backup\_bucket](#output\_longhorn\_backup\_bucket) | Name of the Longhorn backup S3 bucket (null if not created) |
 | <a name="output_longhorn_backup_role_arn"></a> [longhorn\_backup\_role\_arn](#output\_longhorn\_backup\_role\_arn) | IAM role ARN for the Longhorn backup pod identity association (null if enable\_longhorn\_backup\_pod\_identity is false) |
