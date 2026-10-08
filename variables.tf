@@ -164,6 +164,7 @@ variable "node_groups" {
     - min_nodes: Minimum number of nodes (default: 0)
     - max_nodes: Maximum number of nodes (default: 1)
     - ami_type: Override AMI type (AL2023_x86_64_STANDARD, AL2023_ARM_64_STANDARD, AL2023_x86_64_NVIDIA, etc.)
+    - ami_release_version: Pin the EKS-optimized AMI release (e.g., "1.34.11-20260923"), or "latest" to follow the newest release and roll the group whenever AWS publishes one. When unset, a new node group gets the latest release for its Kubernetes version and then stays on it until the Kubernetes version changes (default: null)
     - spot: Use Spot instances for cost savings (default: false)
     - disk_size: Root disk size in GB (default: 20)
     - labels: Map of Kubernetes labels to apply to nodes (default: {})
@@ -174,9 +175,11 @@ variable "node_groups" {
     min_nodes = optional(number, 0)
     max_nodes = optional(number, 1)
     ami_type  = optional(string, "AL2023_x86_64_STANDARD")
-    spot      = optional(bool, false)
-    disk_size = optional(number, null)
-    labels    = optional(map(string), {})
+    # null keeps the release the node group is already running; "latest" follows SSM
+    ami_release_version = optional(string, null)
+    spot                = optional(bool, false)
+    disk_size           = optional(number, null)
+    labels              = optional(map(string), {})
     taints = optional(list(object({
       key    = string
       value  = string
