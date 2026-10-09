@@ -14,7 +14,7 @@ variable "vpc_id" {
 }
 
 variable "subnet_ids" {
-  description = "Private subnet IDs. SINGLE_AZ_2 uses the first; MULTI_AZ_1 uses the first two (the first is preferred)."
+  description = "Private subnet IDs. SINGLE_AZ_2 uses the first; MULTI_AZ_1 uses the first two (the first is preferred), which must be in different AZs."
   type        = list(string)
 }
 
@@ -41,15 +41,27 @@ variable "deployment_type" {
 }
 
 variable "storage_capacity" {
-  description = "Storage capacity of the filesystem in GiB. FSx for OpenZFS has a 64 GiB floor."
+  description = "Storage capacity of the filesystem in GiB, from 64 to 524288."
   type        = number
   default     = 64
+
+  # https://docs.aws.amazon.com/fsx/latest/APIReference/API_CreateFileSystem.html#FSx-CreateFileSystem-request-StorageCapacity
+  validation {
+    condition     = var.storage_capacity >= 64 && var.storage_capacity <= 524288
+    error_message = "storage_capacity must be between 64 and 524288 GiB."
+  }
 }
 
 variable "throughput" {
-  description = "Provisioned throughput of the filesystem in MBps. 160 is the floor shared by SINGLE_AZ_2 and MULTI_AZ_1."
+  description = "Provisioned throughput of the filesystem in MBps: 160, 320, 640, 1280, 2560, 3840, 5120, 7680 or 10240."
   type        = number
   default     = 160
+
+  # https://docs.aws.amazon.com/fsx/latest/APIReference/API_CreateFileSystemOpenZFSConfiguration.html#FSx-Type-CreateFileSystemOpenZFSConfiguration-ThroughputCapacity
+  validation {
+    condition     = contains([160, 320, 640, 1280, 2560, 3840, 5120, 7680, 10240], var.throughput)
+    error_message = "throughput must be one of 160, 320, 640, 1280, 2560, 3840, 5120, 7680 or 10240."
+  }
 }
 
 variable "automatic_backup_retention_days" {

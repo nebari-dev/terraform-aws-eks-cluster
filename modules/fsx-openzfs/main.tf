@@ -83,6 +83,11 @@ resource "aws_fsx_openzfs_file_system" "this" {
 
   lifecycle {
     precondition {
+      condition     = !local.multi_az || length(var.subnet_ids) >= 2
+      error_message = "MULTI_AZ_1 needs at least two private subnets in different AZs."
+    }
+
+    precondition {
       condition     = !local.multi_az || length(var.route_table_ids) > 0
       error_message = "MULTI_AZ_1 needs route_table_ids to include the route table of every subnet the cluster nodes run in."
     }

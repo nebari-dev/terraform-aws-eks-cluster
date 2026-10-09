@@ -129,3 +129,33 @@ run "delete_child_volumes_on_destroy" {
     error_message = "Opting in must delete CSI-created child volumes and snapshots with the filesystem."
   }
 }
+
+run "multi_az_requires_two_subnets" {
+  command = plan
+
+  variables {
+    subnet_ids = ["subnet-aaaa"]
+  }
+
+  expect_failures = [aws_fsx_openzfs_file_system.this]
+}
+
+run "rejects_invalid_throughput" {
+  command = plan
+
+  variables {
+    throughput = 200
+  }
+
+  expect_failures = [var.throughput]
+}
+
+run "rejects_storage_capacity_out_of_range" {
+  command = plan
+
+  variables {
+    storage_capacity = 524289
+  }
+
+  expect_failures = [var.storage_capacity]
+}
