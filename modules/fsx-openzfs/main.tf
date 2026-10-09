@@ -45,8 +45,7 @@ resource "aws_vpc_security_group_ingress_rule" "this" {
 # first subnet and a standby in the second, and is reached through a floating
 # endpoint IP that belongs to no subnet. FSx adds a route for that IP, pointing
 # at the active server, only to the route tables it is given, so nodes in a
-# subnet whose route table is missing get NFS mounts that hang. SINGLE_AZ_2 is used rather than SINGLE_AZ_1 because
-# it shares MULTI_AZ_1's throughput tiers.
+# subnet whose route table is missing get NFS mounts that hang.
 resource "aws_fsx_openzfs_file_system" "this" {
   deployment_type     = var.deployment_type
   storage_capacity    = var.storage_capacity
