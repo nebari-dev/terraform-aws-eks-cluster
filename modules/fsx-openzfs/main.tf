@@ -1,5 +1,3 @@
-data "aws_partition" "current" {}
-
 ################################################################################
 # FSx for OpenZFS filesystem
 ################################################################################
@@ -100,58 +98,13 @@ resource "aws_fsx_openzfs_file_system" "this" {
 # fails with "no EC2 IMDS role found". The CSI driver itself is installed by
 # the consumer (e.g. Nebari Infrastructure Core); only its IAM lives here.
 #
-# Permissions follow the driver's published example policy:
+# Permissions start from the driver's published example policy:
 # https://github.com/kubernetes-sigs/aws-fsx-openzfs-csi-driver/blob/main/docs/example-iam-policy.json
-
-data "aws_iam_policy_document" "csi" {
-  statement {
-    effect = "Allow"
-    actions = [
-      "iam:CreateServiceLinkedRole",
-      "iam:AttachRolePolicy",
-      "iam:PutRolePolicy",
-    ]
-    resources = ["arn:${data.aws_partition.current.partition}:iam::*:role/aws-service-role/fsx.amazonaws.com/*"]
-  }
-
-  statement {
-    effect    = "Allow"
-    actions   = ["iam:CreateServiceLinkedRole"]
-    resources = ["*"]
-    condition {
-      test     = "StringLike"
-      variable = "iam:AWSServiceName"
-      values   = ["fsx.amazonaws.com"]
-    }
-  }
-
-  statement {
-    effect = "Allow"
-    actions = [
-      "fsx:CreateFileSystem",
-      "fsx:UpdateFileSystem",
-      "fsx:DeleteFileSystem",
-      "fsx:DescribeFileSystems",
-      "fsx:CreateVolume",
-      "fsx:DeleteVolume",
-      "fsx:DescribeVolumes",
-      "fsx:CreateSnapshot",
-      "fsx:DeleteSnapshot",
-      "fsx:DescribeSnapshots",
-      "fsx:TagResource",
-      "fsx:ListTagsForResource",
-    ]
-    resources = ["*"]
-  }
-}
-
-resource "aws_iam_policy" "csi" {
-  name        = "${var.project_name}-aws-fsx-openzfs-csi"
-  description = "Permissions for the FSx for OpenZFS CSI driver"
-  policy      = data.aws_iam_policy_document.csi.json
-  tags        = var.tags
-}
-
+# The filesystem-level actions (Create/Update/DeleteFileSystem) and the FSx
+# service-linked role statements are dropped. They are only needed when the
+# driver provisions whole filesystems (ResourceType: filesystem). Here
+# Terraform owns the filesystem and the driver only manages child volumes and
+# snapshots under its root volume (ResourceType: volume).
 module "csi_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
   version = "2.7.0"
@@ -159,9 +112,25 @@ module "csi_pod_identity" {
   name            = "${var.project_name}-aws-fsx-openzfs-csi"
   use_name_prefix = false
 
-  additional_policy_arns = {
-    fsx_csi = aws_iam_policy.csi.arn
-  }
+  attach_custom_policy      = true
+  custom_policy_description = "Permissions for the FSx for OpenZFS CSI driver"
+  policy_statements = [
+    {
+      sid = "FSxOpenZFSVolumes"
+      actions = [
+        "fsx:DescribeFileSystems",
+        "fsx:CreateVolume",
+        "fsx:DeleteVolume",
+        "fsx:DescribeVolumes",
+        "fsx:CreateSnapshot",
+        "fsx:DeleteSnapshot",
+        "fsx:DescribeSnapshots",
+        "fsx:TagResource",
+        "fsx:ListTagsForResource",
+      ]
+      resources = ["*"]
+    }
+  ]
 
   associations = {
     controller = {

@@ -9,12 +9,6 @@ mock_provider "aws" {
     }
   }
 
-  mock_data "aws_partition" {
-    defaults = {
-      partition = "aws"
-    }
-  }
-
   mock_data "aws_iam_policy_document" {
     defaults = {
       json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
@@ -22,7 +16,7 @@ mock_provider "aws" {
   }
 
   # Mocked computed values are random strings by default, which the provider's
-  # ARN validation rejects when they are passed on to the Pod Identity module.
+  # ARN validation rejects when they are passed on to the policy attachment.
   mock_resource "aws_iam_policy" {
     defaults = {
       arn = "arn:aws:iam::123456789012:policy/fsx-test-aws-fsx-openzfs-csi"
