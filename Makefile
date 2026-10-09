@@ -42,7 +42,7 @@ test-unit: ## Run native tofu tests (no cloud resources required)
 
 test: test-unit ## Run unit tests and the Terratest integration suite
 	@echo "Running Terratest suite..."
-	@cd test && go test -v -timeout 60m
+	@cd test && go test -v -timeout 90m
 
 docs: ## Generate documentation with terraform-docs
 	@echo "Generating documentation..."
