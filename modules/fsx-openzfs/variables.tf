@@ -9,40 +9,39 @@ variable "cluster_name" {
 }
 
 variable "vpc_id" {
-  description = "ID of the VPC the filesystems are placed in. Its CIDR is the NFS export client range."
+  description = "ID of the VPC the filesystem is placed in. Its CIDR is the NFS export client range."
   type        = string
 }
 
 variable "subnet_ids" {
-  description = "Private subnet IDs. Single-AZ uses the first; Multi-AZ uses the first two (the first is preferred)."
+  description = "Private subnet IDs. SINGLE_AZ_2 uses the first; MULTI_AZ_1 uses the first two (the first is preferred)."
   type        = list(string)
 }
 
 variable "node_security_group_id" {
-  description = "Security group ID of the cluster nodes, allowed NFS ingress to the filesystems."
+  description = "Security group ID of the cluster nodes, allowed NFS ingress to the filesystem."
   type        = string
 }
 
-variable "single_az_enabled" {
-  description = "Create a SINGLE_AZ_2 FSx for OpenZFS filesystem."
-  type        = bool
-  default     = false
-}
+variable "deployment_type" {
+  description = "FSx for OpenZFS deployment type: MULTI_AZ_1 or SINGLE_AZ_2."
+  type        = string
+  default     = "MULTI_AZ_1"
 
-variable "multi_az_enabled" {
-  description = "Create a MULTI_AZ_1 FSx for OpenZFS filesystem."
-  type        = bool
-  default     = false
+  validation {
+    condition     = contains(["MULTI_AZ_1", "SINGLE_AZ_2"], var.deployment_type)
+    error_message = "deployment_type must be MULTI_AZ_1 or SINGLE_AZ_2."
+  }
 }
 
 variable "storage_capacity" {
-  description = "Storage capacity of each filesystem in GiB. FSx for OpenZFS has a 64 GiB floor."
+  description = "Storage capacity of the filesystem in GiB. FSx for OpenZFS has a 64 GiB floor."
   type        = number
   default     = 64
 }
 
 variable "throughput" {
-  description = "Provisioned throughput of each filesystem in MBps. 160 is the floor shared by SINGLE_AZ_2 and MULTI_AZ_1."
+  description = "Provisioned throughput of the filesystem in MBps. 160 is the floor shared by SINGLE_AZ_2 and MULTI_AZ_1."
   type        = number
   default     = 160
 }

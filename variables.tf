@@ -344,20 +344,25 @@ variable "enable_longhorn_backup_pod_identity" {
 ################################################################################
 # FSx for OpenZFS
 ################################################################################
-variable "fsx_openzfs_single_az_enabled" {
-  description = "Create a SINGLE_AZ_2 FSx for OpenZFS filesystem, plus the NFS security group and the CSI controller's Pod Identity."
+variable "fsx_openzfs_enabled" {
+  description = "Create an FSx for OpenZFS filesystem, plus the NFS security group and the CSI controller's Pod Identity."
   type        = bool
   default     = false
 }
 
-variable "fsx_openzfs_multi_az_enabled" {
-  description = "Create a MULTI_AZ_1 FSx for OpenZFS filesystem across the first two private subnets, plus the NFS security group and the CSI controller's Pod Identity."
-  type        = bool
-  default     = false
+variable "fsx_openzfs_deployment_type" {
+  description = "FSx for OpenZFS deployment type. MULTI_AZ_1 spans the first two private subnets and fails over between them; SINGLE_AZ_2 is cheaper but lives in the first private subnet only."
+  type        = string
+  default     = "MULTI_AZ_1"
+
+  validation {
+    condition     = contains(["MULTI_AZ_1", "SINGLE_AZ_2"], var.fsx_openzfs_deployment_type)
+    error_message = "fsx_openzfs_deployment_type must be MULTI_AZ_1 or SINGLE_AZ_2."
+  }
 }
 
 variable "fsx_openzfs_storage_capacity" {
-  description = "Storage capacity of each FSx for OpenZFS filesystem in GiB. FSx for OpenZFS has a 64 GiB floor."
+  description = "Storage capacity of the FSx for OpenZFS filesystem in GiB. FSx for OpenZFS has a 64 GiB floor."
   type        = number
   default     = 64
 
@@ -368,7 +373,7 @@ variable "fsx_openzfs_storage_capacity" {
 }
 
 variable "fsx_openzfs_throughput" {
-  description = "Provisioned throughput of each FSx for OpenZFS filesystem in MBps. 160 is the floor shared by SINGLE_AZ_2 and MULTI_AZ_1."
+  description = "Provisioned throughput of the FSx for OpenZFS filesystem in MBps. 160 is the floor shared by SINGLE_AZ_2 and MULTI_AZ_1."
   type        = number
   default     = 160
 }

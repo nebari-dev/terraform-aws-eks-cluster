@@ -247,14 +247,14 @@ module "longhorn_backup" {
   tags = var.tags
 }
 
-# Optional FSx for OpenZFS filesystems (Single-AZ and/or Multi-AZ), their NFS
-# security group, and the CSI controller's Pod Identity. Disabled by default;
-# enabled by consumers (e.g. Nebari Infrastructure Core) that install the FSx
-# for OpenZFS CSI driver and point StorageClasses at the root volume outputs.
+# Optional FSx for OpenZFS filesystem, its NFS security group, and the CSI
+# controller's Pod Identity. Disabled by default; enabled by consumers (e.g.
+# Nebari Infrastructure Core) that install the FSx for OpenZFS CSI driver and
+# point StorageClasses at the root volume output.
 module "fsx_openzfs" {
   source = "./modules/fsx-openzfs"
 
-  count = var.fsx_openzfs_single_az_enabled || var.fsx_openzfs_multi_az_enabled ? 1 : 0
+  count = var.fsx_openzfs_enabled ? 1 : 0
 
   project_name           = var.project_name
   cluster_name           = module.eks.cluster_name
@@ -262,11 +262,10 @@ module "fsx_openzfs" {
   subnet_ids             = local.private_subnet_ids
   node_security_group_id = module.eks.node_security_group_id
 
-  single_az_enabled = var.fsx_openzfs_single_az_enabled
-  multi_az_enabled  = var.fsx_openzfs_multi_az_enabled
-  storage_capacity  = var.fsx_openzfs_storage_capacity
-  throughput        = var.fsx_openzfs_throughput
-  compression       = var.fsx_openzfs_compression
+  deployment_type  = var.fsx_openzfs_deployment_type
+  storage_capacity = var.fsx_openzfs_storage_capacity
+  throughput       = var.fsx_openzfs_throughput
+  compression      = var.fsx_openzfs_compression
 
   tags = var.tags
 }

@@ -44,66 +44,25 @@ variables {
   node_security_group_id = "sg-0123456789abcdef0"
 }
 
-run "disabled_creates_nothing" {
+run "multi_az_by_default" {
   command = plan
 
   assert {
     condition = (
-      length(aws_fsx_openzfs_file_system.single_az) == 0 &&
-      length(aws_fsx_openzfs_file_system.multi_az) == 0 &&
-      length(aws_security_group.this) == 0 &&
-      length(aws_vpc_security_group_ingress_rule.this) == 0 &&
-      length(aws_iam_policy.csi) == 0 &&
-      length(module.csi_pod_identity) == 0 &&
-      length(data.aws_route_table.this) == 0
+      aws_fsx_openzfs_file_system.this.deployment_type == "MULTI_AZ_1" &&
+      aws_fsx_openzfs_file_system.this.subnet_ids == tolist(["subnet-aaaa", "subnet-bbbb"]) &&
+      aws_fsx_openzfs_file_system.this.preferred_subnet_id == "subnet-aaaa"
     )
-    error_message = "With both deployment types disabled the module must plan no filesystems, security group, IAM or Pod Identity."
+    error_message = "The default deployment must be MULTI_AZ_1 across the first two private subnets with the first preferred."
+  }
+
+  assert {
+    condition     = length(data.aws_route_table.this) == 2
+    error_message = "Multi-AZ must resolve route tables for the floating endpoint."
   }
 
   assert {
     condition = (
-      output.single_az_id == "" && output.single_az_dns_name == "" && output.single_az_root_volume_id == "" &&
-      output.multi_az_id == "" && output.multi_az_dns_name == "" && output.multi_az_root_volume_id == ""
-    )
-    error_message = "Disabled filesystems must surface as empty strings, which is what NIC checks for."
-  }
-}
-
-run "single_az_only" {
-  command = plan
-
-  variables {
-    single_az_enabled = true
-  }
-
-  assert {
-    condition     = length(aws_fsx_openzfs_file_system.single_az) == 1 && length(aws_fsx_openzfs_file_system.multi_az) == 0
-    error_message = "single_az_enabled alone must plan exactly the Single-AZ filesystem."
-  }
-
-  assert {
-    condition     = aws_fsx_openzfs_file_system.single_az[0].deployment_type == "SINGLE_AZ_2"
-    error_message = "Single-AZ must use SINGLE_AZ_2 so its throughput tiers line up with MULTI_AZ_1."
-  }
-
-  assert {
-    condition     = aws_fsx_openzfs_file_system.single_az[0].subnet_ids == tolist(["subnet-aaaa"])
-    error_message = "Single-AZ must be placed in the first private subnet."
-  }
-
-  assert {
-    condition     = [for c in aws_fsx_openzfs_file_system.single_az[0].root_volume_configuration[0].nfs_exports[0].client_configurations : c.clients] == ["10.10.0.0/16"]
-    error_message = "NFS exports must be scoped to the VPC CIDR."
-  }
-
-  assert {
-    condition     = length(data.aws_route_table.this) == 0
-    error_message = "Route table lookups are only needed for Multi-AZ."
-  }
-
-  assert {
-    condition = (
-      length(aws_security_group.this) == 1 &&
       length(aws_vpc_security_group_ingress_rule.this) == 5 &&
       alltrue([for r in aws_vpc_security_group_ingress_rule.this : r.referenced_security_group_id == "sg-0123456789abcdef0"])
     )
@@ -111,45 +70,39 @@ run "single_az_only" {
   }
 
   assert {
-    condition     = length(aws_iam_policy.csi) == 1 && length(module.csi_pod_identity) == 1
-    error_message = "Any enabled filesystem needs the CSI controller's IAM policy and Pod Identity."
-  }
-
-  assert {
-    condition     = output.multi_az_id == "" && output.multi_az_dns_name == "" && output.multi_az_root_volume_id == ""
-    error_message = "Disabled Multi-AZ outputs must be empty strings."
+    condition     = [for c in aws_fsx_openzfs_file_system.this.root_volume_configuration[0].nfs_exports[0].client_configurations : c.clients] == ["10.10.0.0/16"]
+    error_message = "NFS exports must be scoped to the VPC CIDR."
   }
 }
 
-run "both_enabled" {
+run "single_az" {
   command = plan
 
   variables {
-    single_az_enabled = true
-    multi_az_enabled  = true
-  }
-
-  assert {
-    condition     = length(aws_fsx_openzfs_file_system.single_az) == 1 && length(aws_fsx_openzfs_file_system.multi_az) == 1
-    error_message = "Both flags must plan both filesystems."
+    deployment_type = "SINGLE_AZ_2"
   }
 
   assert {
     condition = (
-      aws_fsx_openzfs_file_system.multi_az[0].deployment_type == "MULTI_AZ_1" &&
-      aws_fsx_openzfs_file_system.multi_az[0].subnet_ids == tolist(["subnet-aaaa", "subnet-bbbb"]) &&
-      aws_fsx_openzfs_file_system.multi_az[0].preferred_subnet_id == "subnet-aaaa"
+      aws_fsx_openzfs_file_system.this.deployment_type == "SINGLE_AZ_2" &&
+      aws_fsx_openzfs_file_system.this.subnet_ids == tolist(["subnet-aaaa"]) &&
+      aws_fsx_openzfs_file_system.this.preferred_subnet_id == null
     )
-    error_message = "Multi-AZ must span the first two private subnets with the first preferred."
+    error_message = "SINGLE_AZ_2 must be placed in the first private subnet only."
   }
 
   assert {
-    condition     = length(data.aws_route_table.this) == 2
-    error_message = "Multi-AZ must resolve the route tables of both of its subnets for the floating endpoint."
+    condition     = length(data.aws_route_table.this) == 0
+    error_message = "Route table lookups are only needed for Multi-AZ."
+  }
+}
+
+run "rejects_unknown_deployment_type" {
+  command = plan
+
+  variables {
+    deployment_type = "SINGLE_AZ_1"
   }
 
-  assert {
-    condition     = length(aws_security_group.this) == 1 && length(aws_iam_policy.csi) == 1 && length(module.csi_pod_identity) == 1
-    error_message = "The security group, IAM policy and Pod Identity are shared, not duplicated per filesystem."
-  }
+  expect_failures = [var.deployment_type]
 }

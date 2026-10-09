@@ -1,21 +1,17 @@
 data "aws_partition" "current" {}
 
 ################################################################################
-# FSx for OpenZFS filesystems (optional)
+# FSx for OpenZFS filesystem
 ################################################################################
-# Both deployment types can be enabled at once. That is wasteful for production
-# but is exactly what a benchmark needs: Multi-AZ acknowledges writes across
-# AZs, so Single-AZ numbers do not substitute for Multi-AZ ones.
 
 locals {
-  enabled = var.single_az_enabled || var.multi_az_enabled
+  multi_az = var.deployment_type == "MULTI_AZ_1"
 }
 
 # The VPC may or may not have been created by the root module, so read the CIDR
 # back rather than branching on create_vpc.
 data "aws_vpc" "this" {
-  count = local.enabled ? 1 : 0
-  id    = var.vpc_id
+  id = var.vpc_id
 }
 
 # Multi-AZ reaches clients through a floating endpoint whose routes are
@@ -24,13 +20,11 @@ data "aws_vpc" "this" {
 # than for_each over the IDs so plan still works when the subnets are created
 # in the same apply and their IDs are not yet known.
 data "aws_route_table" "this" {
-  count     = var.multi_az_enabled ? 2 : 0
+  count     = local.multi_az ? 2 : 0
   subnet_id = var.subnet_ids[count.index]
 }
 
 resource "aws_security_group" "this" {
-  count = local.enabled ? 1 : 0
-
   name        = "${var.project_name}-fsx-openzfs"
   description = "NFS access to FSx for OpenZFS from cluster nodes"
   vpc_id      = var.vpc_id
@@ -42,15 +36,15 @@ resource "aws_security_group" "this" {
 # which is a slow thing to debug. Source is the node security group, so this
 # does not depend on the VPC CIDR shape.
 resource "aws_vpc_security_group_ingress_rule" "this" {
-  for_each = local.enabled ? {
+  for_each = {
     nfs-tcp     = { from = 2049, to = 2049, proto = "tcp" }
     portmap-tcp = { from = 111, to = 111, proto = "tcp" }
     daemons-tcp = { from = 20001, to = 20003, proto = "tcp" }
     portmap-udp = { from = 111, to = 111, proto = "udp" }
     daemons-udp = { from = 20001, to = 20003, proto = "udp" }
-  } : {}
+  }
 
-  security_group_id            = aws_security_group.this[0].id
+  security_group_id            = aws_security_group.this.id
   description                  = "NFS ${each.key} from cluster nodes"
   referenced_security_group_id = var.node_security_group_id
   from_port                    = each.value.from
@@ -58,19 +52,20 @@ resource "aws_vpc_security_group_ingress_rule" "this" {
   ip_protocol                  = each.value.proto
 }
 
-resource "aws_fsx_openzfs_file_system" "single_az" {
-  count = var.single_az_enabled ? 1 : 0
-
-  # SINGLE_AZ_2 rather than SINGLE_AZ_1: its throughput tiers (160, 320, ...)
-  # line up with MULTI_AZ_1's, so the two deployment types can be given
-  # identical provisioned throughput and the comparison isolates the write
-  # path instead of confounding it with a different throughput floor.
-  deployment_type     = "SINGLE_AZ_2"
+# Only placement and routing depend on the deployment type. SINGLE_AZ_2 runs
+# one file server in the first subnet. MULTI_AZ_1 runs an active server in the
+# first subnet and a standby in the second, and is reached through a floating
+# endpoint that needs routes in the node subnets' route tables. SINGLE_AZ_2 is
+# used rather than SINGLE_AZ_1 because it shares MULTI_AZ_1's throughput tiers.
+resource "aws_fsx_openzfs_file_system" "this" {
+  deployment_type     = var.deployment_type
   storage_capacity    = var.storage_capacity
   storage_type        = "SSD"
-  subnet_ids          = [var.subnet_ids[0]]
+  subnet_ids          = local.multi_az ? slice(var.subnet_ids, 0, 2) : [var.subnet_ids[0]]
+  preferred_subnet_id = local.multi_az ? var.subnet_ids[0] : null
+  route_table_ids     = local.multi_az ? distinct(data.aws_route_table.this[*].route_table_id) : null
   throughput_capacity = var.throughput
-  security_group_ids  = [aws_security_group.this[0].id]
+  security_group_ids  = [aws_security_group.this.id]
   skip_final_backup   = true
 
   root_volume_configuration {
@@ -79,39 +74,13 @@ resource "aws_fsx_openzfs_file_system" "single_az" {
     data_compression_type = var.compression
     nfs_exports {
       client_configurations {
-        clients = data.aws_vpc.this[0].cidr_block
+        clients = data.aws_vpc.this.cidr_block
         options = ["rw", "crossmnt", "no_root_squash"]
       }
     }
   }
 
-  tags = merge(var.tags, { Name = "${var.project_name}-fsx-openzfs-single-az" })
-}
-
-resource "aws_fsx_openzfs_file_system" "multi_az" {
-  count = var.multi_az_enabled ? 1 : 0
-
-  deployment_type     = "MULTI_AZ_1"
-  storage_capacity    = var.storage_capacity
-  storage_type        = "SSD"
-  subnet_ids          = slice(var.subnet_ids, 0, 2)
-  preferred_subnet_id = var.subnet_ids[0]
-  route_table_ids     = distinct(data.aws_route_table.this[*].route_table_id)
-  throughput_capacity = var.throughput
-  security_group_ids  = [aws_security_group.this[0].id]
-  skip_final_backup   = true
-
-  root_volume_configuration {
-    data_compression_type = var.compression
-    nfs_exports {
-      client_configurations {
-        clients = data.aws_vpc.this[0].cidr_block
-        options = ["rw", "crossmnt", "no_root_squash"]
-      }
-    }
-  }
-
-  tags = merge(var.tags, { Name = "${var.project_name}-fsx-openzfs-multi-az" })
+  tags = merge(var.tags, { Name = "${var.project_name}-fsx-openzfs" })
 }
 
 ################################################################################
@@ -127,8 +96,6 @@ resource "aws_fsx_openzfs_file_system" "multi_az" {
 # https://github.com/kubernetes-sigs/aws-fsx-openzfs-csi-driver/blob/main/docs/example-iam-policy.json
 
 data "aws_iam_policy_document" "csi" {
-  count = local.enabled ? 1 : 0
-
   statement {
     effect = "Allow"
     actions = [
@@ -171,11 +138,9 @@ data "aws_iam_policy_document" "csi" {
 }
 
 resource "aws_iam_policy" "csi" {
-  count = local.enabled ? 1 : 0
-
   name        = "${var.project_name}-aws-fsx-openzfs-csi"
   description = "Permissions for the FSx for OpenZFS CSI driver"
-  policy      = data.aws_iam_policy_document.csi[0].json
+  policy      = data.aws_iam_policy_document.csi.json
   tags        = var.tags
 }
 
@@ -183,13 +148,11 @@ module "csi_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
   version = "2.7.0"
 
-  count = local.enabled ? 1 : 0
-
   name            = "${var.project_name}-aws-fsx-openzfs-csi"
   use_name_prefix = false
 
   additional_policy_arns = {
-    fsx_csi = aws_iam_policy.csi[0].arn
+    fsx_csi = aws_iam_policy.csi.arn
   }
 
   associations = {

@@ -139,32 +139,17 @@ output "longhorn_backup_role_arn" {
   value       = one(module.longhorn_backup[*].pod_identity_role_arn)
 }
 
-output "fsx_openzfs_single_az_id" {
-  description = "Filesystem ID of the Single-AZ FSx for OpenZFS filesystem; empty when disabled"
-  value       = try(module.fsx_openzfs[0].single_az_id, "")
+output "fsx_openzfs_id" {
+  description = "Filesystem ID of the FSx for OpenZFS filesystem; empty when disabled"
+  value       = try(module.fsx_openzfs[0].id, "")
 }
 
-output "fsx_openzfs_single_az_dns_name" {
-  description = "DNS name of the Single-AZ FSx for OpenZFS filesystem; empty when disabled"
-  value       = try(module.fsx_openzfs[0].single_az_dns_name, "")
+output "fsx_openzfs_dns_name" {
+  description = "DNS name of the FSx for OpenZFS filesystem; empty when disabled"
+  value       = try(module.fsx_openzfs[0].dns_name, "")
 }
 
-output "fsx_openzfs_single_az_root_volume_id" {
-  description = "Root volume ID of the Single-AZ FSx for OpenZFS filesystem, used as the CSI parent volume; empty when disabled"
-  value       = try(module.fsx_openzfs[0].single_az_root_volume_id, "")
-}
-
-output "fsx_openzfs_multi_az_id" {
-  description = "Filesystem ID of the Multi-AZ FSx for OpenZFS filesystem; empty when disabled"
-  value       = try(module.fsx_openzfs[0].multi_az_id, "")
-}
-
-output "fsx_openzfs_multi_az_dns_name" {
-  description = "DNS name of the Multi-AZ FSx for OpenZFS filesystem; empty when disabled"
-  value       = try(module.fsx_openzfs[0].multi_az_dns_name, "")
-}
-
-output "fsx_openzfs_multi_az_root_volume_id" {
-  description = "Root volume ID of the Multi-AZ FSx for OpenZFS filesystem, used as the CSI parent volume; empty when disabled"
-  value       = try(module.fsx_openzfs[0].multi_az_root_volume_id, "")
+output "fsx_openzfs_root_volume_id" {
+  description = "Root volume ID of the FSx for OpenZFS filesystem, used as the CSI parent volume; empty when disabled"
+  value       = try(module.fsx_openzfs[0].root_volume_id, "")
 }
