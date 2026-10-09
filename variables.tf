@@ -164,7 +164,7 @@ variable "node_groups" {
     - min_nodes: Minimum number of nodes (default: 0)
     - max_nodes: Maximum number of nodes (default: 1)
     - ami_type: Override AMI type (AL2023_x86_64_STANDARD, AL2023_ARM_64_STANDARD, AL2023_x86_64_NVIDIA, etc.)
-    - ami_release_version: Pin the EKS-optimized AMI release (e.g., "1.34.11-20260923"), or "latest" to follow the newest release and roll the group whenever AWS publishes one. When unset, a new node group gets the latest release for its Kubernetes version and then stays on it until the Kubernetes version changes (default: null)
+    - ami_release_version: Pin the EKS-optimized AMI release (e.g., "1.34.11-20260923"), or "latest" to follow the newest release, rolling the group on the next apply after AWS publishes one. Bump a pin in the same change as kubernetes_version, otherwise the upgrade ignores it and installs the latest AMI. When unset, a new node group gets the latest release for its Kubernetes version and then stays on it until the Kubernetes version changes (default: null)
     - spot: Use Spot instances for cost savings (default: false)
     - disk_size: Root disk size in GB (default: 20)
     - labels: Map of Kubernetes labels to apply to nodes (default: {})
@@ -208,6 +208,30 @@ variable "node_groups" {
       ]
     ]))
     error_message = "Taint effect must be one of: NO_SCHEDULE, NO_EXECUTE, or PREFER_NO_SCHEDULE."
+  }
+
+  # coalesce() and can() keep every operand error-free on null, so these checks
+  # don't rely on || short-circuiting (Terraform < 1.12, OpenTofu < 1.10).
+  validation {
+    condition = alltrue([
+      for ng_name, ng in var.node_groups :
+      can(regex("^(latest|[0-9]+\\.[0-9]+[0-9A-Za-z.]*-[0-9A-Za-z.]+)$", coalesce(ng.ami_release_version, "latest")))
+    ])
+    error_message = "ami_release_version must be null, \"latest\", or an EKS AMI release version such as \"1.34.11-20260923\"."
+  }
+
+  # A kubernetes_version bump ignores an unchanged pin and installs the latest AMI
+  # for the new minor; the next apply then rolls the group back to the pin.
+  # Bottlerocket release versions are OS versions, so they are not checked.
+  validation {
+    condition = alltrue([
+      for ng_name, ng in var.node_groups :
+      var.kubernetes_version == null ||
+      coalesce(ng.ami_release_version, "latest") == "latest" ||
+      startswith(ng.ami_type, "BOTTLEROCKET_") ||
+      can(regex("^${replace(var.kubernetes_version, ".", "\\.")}[.-]", ng.ami_release_version))
+    ])
+    error_message = "ami_release_version must match kubernetes_version (e.g. \"1.34.x-...\" for 1.34). Bump the pin in the same change as kubernetes_version."
   }
 }
 
