@@ -37,12 +37,6 @@ module "cluster" {
     }
   }
 
-  # EFS configuration
-  efs_enabled          = true
-  efs_performance_mode = "generalPurpose"
-  efs_throughput_mode  = "elastic"
-  efs_encrypted        = true
-
   # Longhorn backup configuration
   # Bucket names must be lowercase; the terratest suite passes a mixed-case
   # random project_name. force_destroy lets test teardown delete the bucket.

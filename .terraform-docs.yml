@@ -57,12 +57,6 @@ content: |-
       }
     }
 
-    # EFS configuration
-    efs_enabled          = true
-    efs_performance_mode = "generalPurpose"
-    efs_throughput_mode  = "elastic"
-    efs_encrypted        = true
-
     # Node security group rules
     # Open ports for Longhorn admission (9502) and conversion (9501) webhooks
     # so the EKS control plane can reach them on the nodes.

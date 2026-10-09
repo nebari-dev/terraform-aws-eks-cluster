@@ -20,8 +20,8 @@ locals {
   public_subnets  = [for i in range(length(local.availability_zones)) : cidrsubnet(var.vpc_cidr_block, 4, i)]
   private_subnets = [for i in range(length(local.availability_zones)) : cidrsubnet(var.vpc_cidr_block, 4, i + 8)]
 
-  # Private subnet IDs to use for the EKS cluster and EFS mount targets are the ones created
-  # with the VPC if existing ones are not provided.
+  # Private subnet IDs to use for the EKS cluster are the ones created with the VPC if
+  # existing ones are not provided.
   private_subnet_ids = var.create_vpc ? flatten(module.vpc[*].private_subnets) : var.existing_private_subnet_ids
 
   interface_vpc_endpoint_services = var.create_vpc ? concat(
@@ -36,15 +36,10 @@ locals {
       "elasticloadbalancing",
       "autoscaling",
     ],
-    var.efs_enabled ? ["elasticfilesystem"] : [],
   ) : []
   gateway_vpc_endpoint_services = var.create_vpc ? [
     "s3",
   ] : []
-
-  # Cluster security group is the one automatically created by EKS unless an existing
-  # one is provided.
-  cluster_security_group_id = var.create_security_group ? module.eks.cluster_primary_security_group_id : var.existing_security_group_id
 
   node_iam_role_arn = var.create_iam_roles ? module.iam.node_iam_role_arn : var.existing_node_iam_role_arn
 
@@ -97,11 +92,10 @@ locals {
       vpc_security_group_ids = local.additional_node_security_group_ids
 
       # Attach the EKS-managed primary cluster SG to nodes when we own the SG
-      # setup. This SG allows all traffic between its members, which lets EFS
-      # mount targets (attached to the primary SG) accept NFS from nodes
-      # without a standalone rule, and future-proofs any addon that needs
-      # node-to-cluster-SG communication. When create_security_group is false,
-      # users bring their own SG and manage their own rules.
+      # setup. This SG allows all traffic between its members, which
+      # future-proofs any addon that needs node-to-cluster-SG communication.
+      # When create_security_group is false, users bring their own SG and
+      # manage their own rules.
       attach_cluster_primary_security_group = var.create_security_group
 
       labels = config.labels
@@ -123,13 +117,4 @@ locals {
       cloudinit_pre_nodeadm = module.node_userdata[name].cloudinit_pre_nodeadm
     }
   }
-
-  # Map each private subnet ID to its EFS mount target configuration
-  efs_mount_targets = var.efs_enabled ? {
-    for idx, subnet_id in local.private_subnet_ids :
-    idx => {
-      subnet_id       = subnet_id
-      security_groups = [local.cluster_security_group_id]
-    }
-  } : {}
 }

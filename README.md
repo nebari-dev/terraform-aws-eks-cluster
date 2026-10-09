@@ -48,12 +48,6 @@ module "cluster" {
     }
   }
 
-  # EFS configuration
-  efs_enabled          = true
-  efs_performance_mode = "generalPurpose"
-  efs_throughput_mode  = "elastic"
-  efs_encrypted        = true
-
   # Node security group rules
   # Open ports for Longhorn admission (9502) and conversion (9501) webhooks
   # so the EKS control plane can reach them on the nodes.
@@ -103,8 +97,6 @@ module "cluster" {
 | <a name="module_aws_lb_controller_pod_identity"></a> [aws\_lb\_controller\_pod\_identity](#module\_aws\_lb\_controller\_pod\_identity) | terraform-aws-modules/eks-pod-identity/aws | 2.7.0 |
 | <a name="module_cluster_autoscaler_pod_identity"></a> [cluster\_autoscaler\_pod\_identity](#module\_cluster\_autoscaler\_pod\_identity) | terraform-aws-modules/eks-pod-identity/aws | 2.7.0 |
 | <a name="module_ebs_csi_pod_identity"></a> [ebs\_csi\_pod\_identity](#module\_ebs\_csi\_pod\_identity) | terraform-aws-modules/eks-pod-identity/aws | 2.7.0 |
-| <a name="module_efs"></a> [efs](#module\_efs) | terraform-aws-modules/efs/aws | 2.0.0 |
-| <a name="module_efs_csi_pod_identity"></a> [efs\_csi\_pod\_identity](#module\_efs\_csi\_pod\_identity) | terraform-aws-modules/eks-pod-identity/aws | 2.7.0 |
 | <a name="module_eks"></a> [eks](#module\_eks) | terraform-aws-modules/eks/aws | 21.11.0 |
 | <a name="module_iam"></a> [iam](#module\_iam) | ./modules/iam | n/a |
 | <a name="module_longhorn_backup"></a> [longhorn\_backup](#module\_longhorn\_backup) | ./modules/longhorn-backup | n/a |
@@ -128,12 +120,6 @@ module "cluster" {
 | <a name="input_create_iam_roles"></a> [create\_iam\_roles](#input\_create\_iam\_roles) | Whether to create new IAM roles for the EKS cluster and node groups. If false, existing\_cluster\_iam\_role\_arn and existing\_node\_iam\_role\_arn must be provided. | `bool` | `true` | no |
 | <a name="input_create_security_group"></a> [create\_security\_group](#input\_create\_security\_group) | Whether to create a new security group for the EKS cluster. If false, existing\_security\_group\_id must be provided. | `bool` | `true` | no |
 | <a name="input_create_vpc"></a> [create\_vpc](#input\_create\_vpc) | Whether to create a new VPC with subnets. If false, existing private subnet IDs and security group ID must be provided. | `bool` | `true` | no |
-| <a name="input_efs_enabled"></a> [efs\_enabled](#input\_efs\_enabled) | Whether to create an EFS file system for the cluster. | `bool` | `false` | no |
-| <a name="input_efs_encrypted"></a> [efs\_encrypted](#input\_efs\_encrypted) | Whether to enable encryption at rest for the EFS file system. | `bool` | `true` | no |
-| <a name="input_efs_kms_key_arn"></a> [efs\_kms\_key\_arn](#input\_efs\_kms\_key\_arn) | The ARN of the KMS key to use for encryption at rest. | `string` | `null` | no |
-| <a name="input_efs_performance_mode"></a> [efs\_performance\_mode](#input\_efs\_performance\_mode) | The performance mode of the EFS file system. Default is `generalPurpose`. | `string` | `"generalPurpose"` | no |
-| <a name="input_efs_provisioned_throughput_in_mibps"></a> [efs\_provisioned\_throughput\_in\_mibps](#input\_efs\_provisioned\_throughput\_in\_mibps) | The provisioned throughput in MiB/s for the EFS file system. Required if throughput\_mode is set to provisioned. | `number` | `null` | no |
-| <a name="input_efs_throughput_mode"></a> [efs\_throughput\_mode](#input\_efs\_throughput\_mode) | The throughput mode of the EFS file system. Default is `bursting`. | `string` | `"bursting"` | no |
 | <a name="input_eks_kms_arn"></a> [eks\_kms\_arn](#input\_eks\_kms\_arn) | The ARN of the KMS key to use for encrypting EKS secrets. If not provided, EKS secrets will not be encrypted. | `string` | `null` | no |
 | <a name="input_enable_aws_load_balancer_controller_pod_identity"></a> [enable\_aws\_load\_balancer\_controller\_pod\_identity](#input\_enable\_aws\_load\_balancer\_controller\_pod\_identity) | Whether to provision the IAM role and EKS Pod Identity association for the AWS Load Balancer Controller. The role is bound to the `aws-load-balancer-controller` service account in `kube-system`. The controller itself is not installed by this module - consumers (e.g., nebari-infrastructure-core) are expected to install the Helm chart after cluster creation. Recommended for all new clusters. If you set this to false, you will need to    create your own IAM role and pod identity association | `bool` | `true` | no |
 | <a name="input_enable_cluster_autoscaler_pod_identity"></a> [enable\_cluster\_autoscaler\_pod\_identity](#input\_enable\_cluster\_autoscaler\_pod\_identity) | Whether to provision the IAM role and EKS Pod Identity association for the Kubernetes Cluster Autoscaler. The role is bound to the `cluster-autoscaler` service account in `kube-system`. The autoscaler itself is not installed by this module and consumers are expected to install the Helm chart after cluster creation. If you set this to false, you will need to create your own IAM role and pod identity association. | `bool` | `true` | no |
@@ -175,10 +161,6 @@ module "cluster" {
 | <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | The name of the EKS cluster |
 | <a name="output_cluster_oidc_issuer_url"></a> [cluster\_oidc\_issuer\_url](#output\_cluster\_oidc\_issuer\_url) | The URL on the EKS cluster for the OpenID Connect identity provider |
 | <a name="output_cluster_security_group_id"></a> [cluster\_security\_group\_id](#output\_cluster\_security\_group\_id) | Security group ID attached to the EKS cluster |
-| <a name="output_efs_arn"></a> [efs\_arn](#output\_efs\_arn) | The ARN of the EFS file system (null if EFS not enabled) |
-| <a name="output_efs_csi_driver_role_arn"></a> [efs\_csi\_driver\_role\_arn](#output\_efs\_csi\_driver\_role\_arn) | IAM role ARN for the EFS CSI driver (null if EFS not enabled) |
-| <a name="output_efs_dns_name"></a> [efs\_dns\_name](#output\_efs\_dns\_name) | The DNS name of the EFS file system (null if EFS not enabled) |
-| <a name="output_efs_id"></a> [efs\_id](#output\_efs\_id) | The ID of the EFS file system (null if EFS not enabled) |
 | <a name="output_kubeconfig_command"></a> [kubeconfig\_command](#output\_kubeconfig\_command) | Command to update kubeconfig |
 | <a name="output_longhorn_backup_bucket"></a> [longhorn\_backup\_bucket](#output\_longhorn\_backup\_bucket) | Name of the Longhorn backup S3 bucket (null if not created) |
 | <a name="output_longhorn_backup_role_arn"></a> [longhorn\_backup\_role\_arn](#output\_longhorn\_backup\_role\_arn) | IAM role ARN for the Longhorn backup pod identity association (null if enable\_longhorn\_backup\_pod\_identity is false) |

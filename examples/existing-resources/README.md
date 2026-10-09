@@ -1,6 +1,6 @@
 # Existing Resources Example
 
-This example provisions an Amazon EKS cluster, multiple node groups, and an EFS File System on top of an existing VPC, subnets, security groups, and IAM roles. It showcases how to use the module in a scenario where the networking components and the IAM roles are managed outside of the module.
+This example provisions an Amazon EKS cluster and multiple node groups on top of an existing VPC, subnets, security groups, and IAM roles. It showcases how to use the module in a scenario where the networking components and the IAM roles are managed outside of the module.
 
 For convenience, this example includes separate Terraform configurations in the `networking/` and `iam/` directories that automatically create the required VPC, subnets, security groups, and IAM roles. You can also modify the example to use your own existing resources by updating the relevant variables in `main.tf`
 

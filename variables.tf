@@ -255,55 +255,6 @@ variable "enable_irsa" {
 }
 
 ################################################################################
-# EFS
-################################################################################
-variable "efs_enabled" {
-  description = "Whether to create an EFS file system for the cluster."
-  type        = bool
-  default     = false
-}
-
-variable "efs_performance_mode" {
-  description = "The performance mode of the EFS file system. Default is `generalPurpose`."
-  type        = string
-  default     = "generalPurpose"
-
-  validation {
-    condition     = contains(["generalPurpose", "maxIO"], var.efs_performance_mode)
-    error_message = "efs_performance_mode must be either 'generalPurpose' or 'maxIO'."
-  }
-}
-
-variable "efs_throughput_mode" {
-  description = "The throughput mode of the EFS file system. Default is `bursting`."
-  type        = string
-  default     = "bursting"
-
-  validation {
-    condition     = contains(["bursting", "provisioned", "elastic"], var.efs_throughput_mode)
-    error_message = "efs_throughput_mode must be one of: 'bursting', 'provisioned', or 'elastic'."
-  }
-}
-
-variable "efs_provisioned_throughput_in_mibps" {
-  description = "The provisioned throughput in MiB/s for the EFS file system. Required if throughput_mode is set to provisioned."
-  type        = number
-  default     = null
-}
-
-variable "efs_encrypted" {
-  description = "Whether to enable encryption at rest for the EFS file system."
-  type        = bool
-  default     = true
-}
-
-variable "efs_kms_key_arn" {
-  description = "The ARN of the KMS key to use for encryption at rest."
-  type        = string
-  default     = null
-}
-
-################################################################################
 # Longhorn backup bucket
 ################################################################################
 variable "longhorn_backup_bucket_create" {
