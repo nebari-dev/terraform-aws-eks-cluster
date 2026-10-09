@@ -153,3 +153,8 @@ output "fsx_openzfs_root_volume_id" {
   description = "Root volume ID of the FSx for OpenZFS filesystem, used as the CSI parent volume (null if fsx_openzfs_enabled is false)"
   value       = one(module.fsx_openzfs[*].root_volume_id)
 }
+
+output "fsx_openzfs_csi_role_arn" {
+  description = "IAM role ARN for the FSx for OpenZFS CSI controller pod identity association (null if fsx_openzfs_enabled is false)"
+  value       = one(module.fsx_openzfs[*].csi_role_arn)
+}
