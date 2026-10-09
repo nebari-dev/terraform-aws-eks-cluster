@@ -260,6 +260,7 @@ module "fsx_openzfs" {
   cluster_name           = module.eks.cluster_name
   vpc_id                 = var.create_vpc ? one(module.vpc[*].vpc_id) : var.existing_vpc_id
   subnet_ids             = local.private_subnet_ids
+  route_table_ids        = var.create_vpc ? flatten(module.vpc[*].private_route_table_ids) : var.existing_private_route_table_ids
   node_security_group_id = module.eks.node_security_group_id
 
   deployment_type  = var.fsx_openzfs_deployment_type

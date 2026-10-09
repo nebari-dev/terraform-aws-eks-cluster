@@ -18,6 +18,12 @@ variable "subnet_ids" {
   type        = list(string)
 }
 
+variable "route_table_ids" {
+  description = "Route tables of every subnet the cluster nodes run in. MULTI_AZ_1 adds routes to its floating endpoint to these; ignored for SINGLE_AZ_2."
+  type        = list(string)
+  default     = []
+}
+
 variable "node_security_group_id" {
   description = "Security group ID of the cluster nodes, allowed NFS ingress to the filesystem."
   type        = string

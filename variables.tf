@@ -55,6 +55,17 @@ variable "existing_private_subnet_ids" {
   }
 }
 
+variable "existing_private_route_table_ids" {
+  description = "Route tables of the existing private subnets, used if not creating a new VPC. Required for a MULTI_AZ_1 FSx for OpenZFS filesystem, which adds routes to its floating endpoint to them. Include the VPC's main route table if any of the subnets use it implicitly."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = var.create_vpc || !var.fsx_openzfs_enabled || var.fsx_openzfs_deployment_type != "MULTI_AZ_1" || length(var.existing_private_route_table_ids) > 0
+    error_message = "When 'create_vpc' is false and a MULTI_AZ_1 FSx for OpenZFS filesystem is enabled, 'existing_private_route_table_ids' must list the route tables of the private subnets."
+  }
+}
+
 variable "create_security_group" {
   description = "Whether to create a new security group for the EKS cluster. If false, existing_security_group_id must be provided."
   type        = bool

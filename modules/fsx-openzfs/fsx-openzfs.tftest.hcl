@@ -41,6 +41,7 @@ variables {
   cluster_name           = "fsx-test"
   vpc_id                 = "vpc-0123456789abcdef0"
   subnet_ids             = ["subnet-aaaa", "subnet-bbbb", "subnet-cccc"]
+  route_table_ids        = ["rtb-aaaa", "rtb-bbbb", "rtb-cccc"]
   node_security_group_id = "sg-0123456789abcdef0"
 }
 
@@ -57,8 +58,8 @@ run "multi_az_by_default" {
   }
 
   assert {
-    condition     = length(data.aws_route_table.this) == 2
-    error_message = "Multi-AZ must resolve route tables for the floating endpoint."
+    condition     = toset(aws_fsx_openzfs_file_system.this.route_table_ids) == toset(["rtb-aaaa", "rtb-bbbb", "rtb-cccc"])
+    error_message = "Multi-AZ must route its floating endpoint through every node subnet's route table, not only the two it runs in."
   }
 
   assert {
@@ -90,11 +91,6 @@ run "single_az" {
     )
     error_message = "SINGLE_AZ_2 must be placed in the first private subnet only."
   }
-
-  assert {
-    condition     = length(data.aws_route_table.this) == 0
-    error_message = "Route table lookups are only needed for Multi-AZ."
-  }
 }
 
 run "rejects_unknown_deployment_type" {
@@ -105,4 +101,14 @@ run "rejects_unknown_deployment_type" {
   }
 
   expect_failures = [var.deployment_type]
+}
+
+run "multi_az_requires_route_tables" {
+  command = plan
+
+  variables {
+    route_table_ids = []
+  }
+
+  expect_failures = [aws_fsx_openzfs_file_system.this]
 }

@@ -14,16 +14,6 @@ data "aws_vpc" "this" {
   id = var.vpc_id
 }
 
-# Multi-AZ reaches clients through a floating endpoint whose routes are
-# injected into the subnets' route tables. Only subnet IDs are passed in, so
-# resolve the route tables from the first two of them. Counted by index rather
-# than for_each over the IDs so plan still works when the subnets are created
-# in the same apply and their IDs are not yet known.
-data "aws_route_table" "this" {
-  count     = local.multi_az ? 2 : 0
-  subnet_id = var.subnet_ids[count.index]
-}
-
 resource "aws_security_group" "this" {
   name        = "${var.project_name}-fsx-openzfs"
   description = "NFS access to FSx for OpenZFS from cluster nodes"
@@ -55,15 +45,17 @@ resource "aws_vpc_security_group_ingress_rule" "this" {
 # Only placement and routing depend on the deployment type. SINGLE_AZ_2 runs
 # one file server in the first subnet. MULTI_AZ_1 runs an active server in the
 # first subnet and a standby in the second, and is reached through a floating
-# endpoint that needs routes in the node subnets' route tables. SINGLE_AZ_2 is
-# used rather than SINGLE_AZ_1 because it shares MULTI_AZ_1's throughput tiers.
+# endpoint IP that belongs to no subnet. FSx adds a route for that IP, pointing
+# at the active server, only to the route tables it is given, so nodes in a
+# subnet whose route table is missing get NFS mounts that hang. SINGLE_AZ_2 is used rather than SINGLE_AZ_1 because
+# it shares MULTI_AZ_1's throughput tiers.
 resource "aws_fsx_openzfs_file_system" "this" {
   deployment_type     = var.deployment_type
   storage_capacity    = var.storage_capacity
   storage_type        = "SSD"
   subnet_ids          = local.multi_az ? slice(var.subnet_ids, 0, 2) : [var.subnet_ids[0]]
   preferred_subnet_id = local.multi_az ? var.subnet_ids[0] : null
-  route_table_ids     = local.multi_az ? distinct(data.aws_route_table.this[*].route_table_id) : null
+  route_table_ids     = local.multi_az ? var.route_table_ids : null
   throughput_capacity = var.throughput
   security_group_ids  = [aws_security_group.this.id]
   skip_final_backup   = true
@@ -81,6 +73,13 @@ resource "aws_fsx_openzfs_file_system" "this" {
   }
 
   tags = merge(var.tags, { Name = "${var.project_name}-fsx-openzfs" })
+
+  lifecycle {
+    precondition {
+      condition     = !local.multi_az || length(var.route_table_ids) > 0
+      error_message = "MULTI_AZ_1 needs route_table_ids to include the route table of every subnet the cluster nodes run in."
+    }
+  }
 }
 
 ################################################################################
