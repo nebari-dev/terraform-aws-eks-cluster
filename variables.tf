@@ -55,6 +55,17 @@ variable "existing_private_subnet_ids" {
   }
 }
 
+variable "existing_private_route_table_ids" {
+  description = "Route tables of the existing private subnets, used if not creating a new VPC. Required for a MULTI_AZ_1 FSx for OpenZFS filesystem, which adds routes to its floating endpoint to them. Include the VPC's main route table if any of the subnets use it implicitly."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = var.create_vpc || !var.fsx_openzfs_enabled || var.fsx_openzfs_deployment_type != "MULTI_AZ_1" || length(var.existing_private_route_table_ids) > 0
+    error_message = "When 'create_vpc' is false and a MULTI_AZ_1 FSx for OpenZFS filesystem is enabled, 'existing_private_route_table_ids' must list the route tables of the private subnets."
+  }
+}
+
 variable "create_security_group" {
   description = "Whether to create a new security group for the EKS cluster. If false, existing_security_group_id must be provided."
   type        = bool
@@ -337,6 +348,73 @@ variable "longhorn_backup_bucket_force_destroy" {
 
 variable "enable_longhorn_backup_pod_identity" {
   description = "Provision an EKS Pod Identity association granting Longhorn's service account (longhorn-service-account in longhorn-system) scoped S3 access to the backup bucket, so Longhorn backs up without static credentials. Requires longhorn_backup_bucket_name (created here or pre-existing)."
+  type        = bool
+  default     = false
+}
+
+################################################################################
+# FSx for OpenZFS
+################################################################################
+variable "fsx_openzfs_enabled" {
+  description = "Create an FSx for OpenZFS filesystem, plus the NFS security group and the CSI controller's Pod Identity."
+  type        = bool
+  default     = false
+}
+
+variable "fsx_openzfs_deployment_type" {
+  description = "FSx for OpenZFS deployment type. MULTI_AZ_1 spans the first two private subnets and fails over between them; SINGLE_AZ_2 is cheaper but lives in the first private subnet only."
+  type        = string
+  default     = "MULTI_AZ_1"
+
+  validation {
+    condition     = contains(["MULTI_AZ_1", "SINGLE_AZ_2"], var.fsx_openzfs_deployment_type)
+    error_message = "fsx_openzfs_deployment_type must be MULTI_AZ_1 or SINGLE_AZ_2."
+  }
+}
+
+variable "fsx_openzfs_storage_capacity" {
+  description = "Storage capacity of the FSx for OpenZFS filesystem in GiB, from 64 to 524288."
+  type        = number
+  default     = 64
+
+  # https://docs.aws.amazon.com/fsx/latest/APIReference/API_CreateFileSystem.html#FSx-CreateFileSystem-request-StorageCapacity
+  validation {
+    condition     = var.fsx_openzfs_storage_capacity >= 64 && var.fsx_openzfs_storage_capacity <= 524288
+    error_message = "fsx_openzfs_storage_capacity must be between 64 and 524288 GiB."
+  }
+}
+
+variable "fsx_openzfs_throughput" {
+  description = "Provisioned throughput of the FSx for OpenZFS filesystem in MBps: 160, 320, 640, 1280, 2560, 3840, 5120, 7680 or 10240."
+  type        = number
+  default     = 160
+
+  # https://docs.aws.amazon.com/fsx/latest/APIReference/API_CreateFileSystemOpenZFSConfiguration.html#FSx-Type-CreateFileSystemOpenZFSConfiguration-ThroughputCapacity
+  validation {
+    condition     = contains([160, 320, 640, 1280, 2560, 3840, 5120, 7680, 10240], var.fsx_openzfs_throughput)
+    error_message = "fsx_openzfs_throughput must be one of 160, 320, 640, 1280, 2560, 3840, 5120, 7680 or 10240."
+  }
+}
+
+variable "fsx_openzfs_automatic_backup_retention_days" {
+  description = "Days to keep automatic daily backups of the FSx for OpenZFS filesystem, from 0 to 90. 0 disables automatic backups."
+  type        = number
+  default     = 7
+
+  validation {
+    condition     = var.fsx_openzfs_automatic_backup_retention_days >= 0 && var.fsx_openzfs_automatic_backup_retention_days <= 90
+    error_message = "fsx_openzfs_automatic_backup_retention_days must be between 0 and 90."
+  }
+}
+
+variable "fsx_openzfs_skip_final_backup" {
+  description = "Skip the final backup when the FSx for OpenZFS filesystem is deleted. The final backup is kept after the cluster is destroyed and must be deleted separately."
+  type        = bool
+  default     = false
+}
+
+variable "fsx_openzfs_delete_child_volumes_on_destroy" {
+  description = "Delete the child volumes and snapshots created by the FSx for OpenZFS CSI driver together with the filesystem. When false, destroy fails while any remain."
   type        = bool
   default     = false
 }

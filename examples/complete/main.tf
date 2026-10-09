@@ -51,6 +51,11 @@ module "cluster" {
   longhorn_backup_bucket_force_destroy = true
   enable_longhorn_backup_pod_identity  = true
 
+  # FSx for OpenZFS configuration
+  fsx_openzfs_enabled                         = true
+  fsx_openzfs_deployment_type                 = "MULTI_AZ_1"
+  fsx_openzfs_automatic_backup_retention_days = 7
+
   # Node security group rules
   node_security_group_additional_rules = {
     longhorn_webhook_admission = {
