@@ -140,16 +140,16 @@ output "longhorn_backup_role_arn" {
 }
 
 output "fsx_openzfs_id" {
-  description = "Filesystem ID of the FSx for OpenZFS filesystem; empty when disabled"
-  value       = try(module.fsx_openzfs[0].id, "")
+  description = "Filesystem ID of the FSx for OpenZFS filesystem (null if fsx_openzfs_enabled is false)"
+  value       = one(module.fsx_openzfs[*].id)
 }
 
 output "fsx_openzfs_dns_name" {
-  description = "DNS name of the FSx for OpenZFS filesystem; empty when disabled"
-  value       = try(module.fsx_openzfs[0].dns_name, "")
+  description = "DNS name of the FSx for OpenZFS filesystem (null if fsx_openzfs_enabled is false)"
+  value       = one(module.fsx_openzfs[*].dns_name)
 }
 
 output "fsx_openzfs_root_volume_id" {
-  description = "Root volume ID of the FSx for OpenZFS filesystem, used as the CSI parent volume; empty when disabled"
-  value       = try(module.fsx_openzfs[0].root_volume_id, "")
+  description = "Root volume ID of the FSx for OpenZFS filesystem, used as the CSI parent volume (null if fsx_openzfs_enabled is false)"
+  value       = one(module.fsx_openzfs[*].root_volume_id)
 }
