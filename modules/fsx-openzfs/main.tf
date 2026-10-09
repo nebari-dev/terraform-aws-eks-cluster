@@ -109,8 +109,7 @@ module "csi_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
   version = "2.7.0"
 
-  name            = "${var.project_name}-aws-fsx-openzfs-csi"
-  use_name_prefix = false
+  name = "${var.project_name}-fsx-csi"
 
   attach_custom_policy      = true
   custom_policy_description = "Permissions for the FSx for OpenZFS CSI driver"

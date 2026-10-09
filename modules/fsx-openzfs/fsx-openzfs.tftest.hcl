@@ -19,13 +19,13 @@ mock_provider "aws" {
   # ARN validation rejects when they are passed on to the policy attachment.
   mock_resource "aws_iam_policy" {
     defaults = {
-      arn = "arn:aws:iam::123456789012:policy/fsx-test-aws-fsx-openzfs-csi"
+      arn = "arn:aws:iam::123456789012:policy/fsx-test-fsx-csi"
     }
   }
 
   mock_resource "aws_iam_role" {
     defaults = {
-      arn = "arn:aws:iam::123456789012:role/fsx-test-aws-fsx-openzfs-csi"
+      arn = "arn:aws:iam::123456789012:role/fsx-test-fsx-csi"
     }
   }
 }
