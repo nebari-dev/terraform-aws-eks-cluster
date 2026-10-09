@@ -58,7 +58,16 @@ resource "aws_fsx_openzfs_file_system" "this" {
   route_table_ids     = local.multi_az ? var.route_table_ids : null
   throughput_capacity = var.throughput
   security_group_ids  = [aws_security_group.this.id]
-  skip_final_backup   = true
+
+  automatic_backup_retention_days = var.automatic_backup_retention_days
+  skip_final_backup               = var.skip_final_backup
+  copy_tags_to_backups            = true
+  copy_tags_to_volumes            = true
+
+  # FSx refuses to delete a filesystem that still has child volumes or
+  # snapshots, which the CSI driver creates outside Terraform. Unless opted in,
+  # destroy fails while any remain rather than deleting user data with them.
+  delete_options = var.delete_child_volumes_on_destroy ? ["DELETE_CHILD_VOLUMES_AND_SNAPSHOTS"] : null
 
   root_volume_configuration {
     # The root volume is only the parent of the CSI-provisioned child volumes;

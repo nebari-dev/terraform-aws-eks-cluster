@@ -74,6 +74,16 @@ run "multi_az_by_default" {
     condition     = [for c in aws_fsx_openzfs_file_system.this.root_volume_configuration[0].nfs_exports[0].client_configurations : c.clients] == ["10.10.0.0/16"]
     error_message = "NFS exports must be scoped to the VPC CIDR."
   }
+
+  assert {
+    condition = (
+      aws_fsx_openzfs_file_system.this.automatic_backup_retention_days == 7 &&
+      aws_fsx_openzfs_file_system.this.skip_final_backup == false &&
+      aws_fsx_openzfs_file_system.this.copy_tags_to_backups == true &&
+      aws_fsx_openzfs_file_system.this.copy_tags_to_volumes == true
+    )
+    error_message = "By default the filesystem must keep 7 days of automatic backups, take a final backup on delete, and copy tags to backups and child volumes."
+  }
 }
 
 run "single_az" {
@@ -111,4 +121,17 @@ run "multi_az_requires_route_tables" {
   }
 
   expect_failures = [aws_fsx_openzfs_file_system.this]
+}
+
+run "delete_child_volumes_on_destroy" {
+  command = plan
+
+  variables {
+    delete_child_volumes_on_destroy = true
+  }
+
+  assert {
+    condition     = toset(aws_fsx_openzfs_file_system.this.delete_options) == toset(["DELETE_CHILD_VOLUMES_AND_SNAPSHOTS"])
+    error_message = "Opting in must delete CSI-created child volumes and snapshots with the filesystem."
+  }
 }

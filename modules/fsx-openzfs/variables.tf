@@ -52,6 +52,29 @@ variable "throughput" {
   default     = 160
 }
 
+variable "automatic_backup_retention_days" {
+  description = "Days to keep automatic daily backups of the filesystem, from 0 to 90. 0 disables automatic backups."
+  type        = number
+  default     = 7
+
+  validation {
+    condition     = var.automatic_backup_retention_days >= 0 && var.automatic_backup_retention_days <= 90
+    error_message = "automatic_backup_retention_days must be between 0 and 90."
+  }
+}
+
+variable "skip_final_backup" {
+  description = "Skip the final backup when the filesystem is deleted."
+  type        = bool
+  default     = false
+}
+
+variable "delete_child_volumes_on_destroy" {
+  description = "Delete the CSI-created child volumes and snapshots together with the filesystem. When false, destroy fails while any remain."
+  type        = bool
+  default     = false
+}
+
 variable "compression" {
   description = "ZFS compression on the root volume: LZ4, ZSTD or NONE."
   type        = string

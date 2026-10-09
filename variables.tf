@@ -399,3 +399,26 @@ variable "fsx_openzfs_compression" {
     error_message = "fsx_openzfs_compression must be one of LZ4, ZSTD or NONE."
   }
 }
+
+variable "fsx_openzfs_automatic_backup_retention_days" {
+  description = "Days to keep automatic daily backups of the FSx for OpenZFS filesystem, from 0 to 90. 0 disables automatic backups."
+  type        = number
+  default     = 7
+
+  validation {
+    condition     = var.fsx_openzfs_automatic_backup_retention_days >= 0 && var.fsx_openzfs_automatic_backup_retention_days <= 90
+    error_message = "fsx_openzfs_automatic_backup_retention_days must be between 0 and 90."
+  }
+}
+
+variable "fsx_openzfs_skip_final_backup" {
+  description = "Skip the final backup when the FSx for OpenZFS filesystem is deleted. The final backup is kept after the cluster is destroyed and must be deleted separately."
+  type        = bool
+  default     = false
+}
+
+variable "fsx_openzfs_delete_child_volumes_on_destroy" {
+  description = "Delete the child volumes and snapshots created by the FSx for OpenZFS CSI driver together with the filesystem. When false, destroy fails while any remain."
+  type        = bool
+  default     = false
+}

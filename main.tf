@@ -268,6 +268,10 @@ module "fsx_openzfs" {
   throughput       = var.fsx_openzfs_throughput
   compression      = var.fsx_openzfs_compression
 
+  automatic_backup_retention_days = var.fsx_openzfs_automatic_backup_retention_days
+  skip_final_backup               = var.fsx_openzfs_skip_final_backup
+  delete_child_volumes_on_destroy = var.fsx_openzfs_delete_child_volumes_on_destroy
+
   tags = var.tags
 }
 
