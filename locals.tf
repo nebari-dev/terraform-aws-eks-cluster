@@ -37,6 +37,7 @@ locals {
       "autoscaling",
     ],
     var.efs_enabled ? ["elasticfilesystem"] : [],
+    var.fsx_openzfs_enabled ? ["fsx"] : [],
   ) : []
   gateway_vpc_endpoint_services = var.create_vpc ? [
     "s3",
