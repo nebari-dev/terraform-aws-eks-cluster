@@ -68,9 +68,12 @@ resource "aws_fsx_openzfs_file_system" "this" {
   delete_options = var.delete_child_volumes_on_destroy ? ["DELETE_CHILD_VOLUMES_AND_SNAPSHOTS"] : null
 
   root_volume_configuration {
-    # The root volume is only the parent of the CSI-provisioned child volumes;
-    # workloads write into children, not here.
-    data_compression_type = var.compression
+    # The root volume is the parent of the CSI-provisioned child volumes, and
+    # workloads write into those children. Children do not inherit this
+    # setting; their compression comes from the StorageClass's
+    # DataCompressionType. LZ4 only covers data written to the root volume
+    # directly, and is cheap enough to be a safe default there.
+    data_compression_type = "LZ4"
     nfs_exports {
       client_configurations {
         clients = data.aws_vpc.this.cidr_block

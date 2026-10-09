@@ -87,12 +87,6 @@ variable "delete_child_volumes_on_destroy" {
   default     = false
 }
 
-variable "compression" {
-  description = "ZFS compression on the root volume: LZ4, ZSTD or NONE."
-  type        = string
-  default     = "LZ4"
-}
-
 variable "tags" {
   description = "A map of tags to add to all resources"
   type        = map(string)

@@ -396,17 +396,6 @@ variable "fsx_openzfs_throughput" {
   }
 }
 
-variable "fsx_openzfs_compression" {
-  description = "ZFS compression on the FSx for OpenZFS root volume: LZ4, ZSTD or NONE."
-  type        = string
-  default     = "LZ4"
-
-  validation {
-    condition     = contains(["LZ4", "ZSTD", "NONE"], var.fsx_openzfs_compression)
-    error_message = "fsx_openzfs_compression must be one of LZ4, ZSTD or NONE."
-  }
-}
-
 variable "fsx_openzfs_automatic_backup_retention_days" {
   description = "Days to keep automatic daily backups of the FSx for OpenZFS filesystem, from 0 to 90. 0 disables automatic backups."
   type        = number

@@ -266,7 +266,6 @@ module "fsx_openzfs" {
   deployment_type  = var.fsx_openzfs_deployment_type
   storage_capacity = var.fsx_openzfs_storage_capacity
   throughput       = var.fsx_openzfs_throughput
-  compression      = var.fsx_openzfs_compression
 
   automatic_backup_retention_days = var.fsx_openzfs_automatic_backup_retention_days
   skip_final_backup               = var.fsx_openzfs_skip_final_backup
