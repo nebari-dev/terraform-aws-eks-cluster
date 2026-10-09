@@ -60,19 +60,6 @@ module "node_userdata" {
   extra_ca_bundle = var.extra_ca_bundle
 }
 
-module "efs_csi_pod_identity" {
-  source  = "terraform-aws-modules/eks-pod-identity/aws"
-  version = "2.7.0"
-
-  count = var.efs_enabled ? 1 : 0
-
-  name = "${var.project_name}-aws-efs-csi"
-
-  attach_aws_efs_csi_policy = true
-
-  tags = var.tags
-}
-
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "21.11.0"
@@ -80,32 +67,22 @@ module "eks" {
   name               = var.project_name
   kubernetes_version = var.kubernetes_version
 
-  addons = merge(
-    {
-      aws-ebs-csi-driver = {
-        pod_identity_association = [{
-          role_arn        = module.ebs_csi_pod_identity.iam_role_arn,
-          service_account = "ebs-csi-controller-sa"
-        }]
-      }
-      coredns = {}
-      eks-pod-identity-agent = {
-        before_compute = true
-      }
-      kube-proxy = {}
-      vpc-cni = {
-        before_compute = true
-      }
-    },
-    var.efs_enabled ? {
-      aws-efs-csi-driver = {
-        pod_identity_association = [{
-          role_arn        = one(module.efs_csi_pod_identity[*].iam_role_arn)
-          service_account = "efs-csi-controller-sa"
-        }]
-      }
-    } : {}
-  )
+  addons = {
+    aws-ebs-csi-driver = {
+      pod_identity_association = [{
+        role_arn        = module.ebs_csi_pod_identity.iam_role_arn,
+        service_account = "ebs-csi-controller-sa"
+      }]
+    }
+    coredns = {}
+    eks-pod-identity-agent = {
+      before_compute = true
+    }
+    kube-proxy = {}
+    vpc-cni = {
+      before_compute = true
+    }
+  }
 
   # Use existing security group if provided or have EKS create one otherwise
   create_security_group = var.create_security_group
@@ -160,7 +137,7 @@ module "eks" {
 
 # Association is configured via the pod-identity module's `associations`
 # argument (rather than via `module.eks.addons.pod_identity_association`, like
-# the EBS/EFS CSI drivers above) because the AWS Load Balancer Controller is
+# the EBS CSI driver above) because the AWS Load Balancer Controller is
 # not an EKS-managed addon - AWS publishes no addon for it, so the chart is
 # installed separately by consumers of this module.
 module "aws_lb_controller_pod_identity" {
@@ -243,28 +220,6 @@ module "longhorn_backup" {
 
   enable_pod_identity = var.enable_longhorn_backup_pod_identity
   cluster_name        = module.eks.cluster_name
-
-  tags = var.tags
-}
-
-module "efs" {
-  source  = "terraform-aws-modules/efs/aws"
-  version = "2.0.0"
-
-  # Create EFS resources only if EFS is enabled
-  count = var.efs_enabled ? 1 : 0
-
-  name = "${var.project_name}-efs"
-
-  create_security_group = false
-  mount_targets         = local.efs_mount_targets
-
-  encrypted   = var.efs_encrypted
-  kms_key_arn = var.efs_kms_key_arn
-
-  performance_mode                = var.efs_performance_mode
-  throughput_mode                 = var.efs_throughput_mode
-  provisioned_throughput_in_mibps = var.efs_provisioned_throughput_in_mibps
 
   tags = var.tags
 }

@@ -74,26 +74,6 @@ output "node_groups" {
   value       = module.cluster.node_groups
 }
 
-output "efs_id" {
-  description = "The ID of the EFS file system (null if EFS not enabled)"
-  value       = module.cluster.efs_id
-}
-
-output "efs_arn" {
-  description = "The ARN of the EFS file system (null if EFS not enabled)"
-  value       = module.cluster.efs_arn
-}
-
-output "efs_dns_name" {
-  description = "The DNS name of the EFS file system (null if EFS not enabled)"
-  value       = module.cluster.efs_dns_name
-}
-
-output "efs_csi_driver_role_arn" {
-  description = "IAM role ARN for the EFS CSI driver (null if EFS not enabled)"
-  value       = module.cluster.efs_csi_driver_role_arn
-}
-
 output "longhorn_backup_bucket" {
   description = "Name of the Longhorn backup S3 bucket (null if not created)"
   value       = module.cluster.longhorn_backup_bucket

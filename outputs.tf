@@ -96,29 +96,6 @@ output "cluster_autoscaler_role_arn" {
 }
 
 ################################################################################
-# EFS
-################################################################################
-output "efs_id" {
-  description = "The ID of the EFS file system (null if EFS not enabled)"
-  value       = one(module.efs[*].id)
-}
-
-output "efs_arn" {
-  description = "The ARN of the EFS file system (null if EFS not enabled)"
-  value       = one(module.efs[*].arn)
-}
-
-output "efs_dns_name" {
-  description = "The DNS name of the EFS file system (null if EFS not enabled)"
-  value       = one(module.efs[*].dns_name)
-}
-
-output "efs_csi_driver_role_arn" {
-  description = "IAM role ARN for the EFS CSI driver (null if EFS not enabled)"
-  value       = one(module.efs_csi_pod_identity[*].iam_role_arn)
-}
-
-################################################################################
 # Misc
 ################################################################################
 output "kubeconfig_command" {
