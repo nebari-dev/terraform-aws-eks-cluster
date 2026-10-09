@@ -35,6 +35,10 @@ func writeTestOverride(t *testing.T, exampleDir string) {
 				// values set in the examples.
 				"endpoint_public_access":                   true,
 				"enable_cluster_creator_admin_permissions": true,
+				// Make sure to skip final backup to allow a flawless destroy when running
+				// the tests
+				"fsx_openzfs_skip_final_backup":               true,
+				"fsx_openzfs_delete_child_volumes_on_destroy": true,
 			},
 		},
 	}
