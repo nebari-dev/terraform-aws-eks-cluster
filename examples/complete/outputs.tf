@@ -104,6 +104,26 @@ output "longhorn_backup_role_arn" {
   value       = module.cluster.longhorn_backup_role_arn
 }
 
+output "fsx_openzfs_id" {
+  description = "Filesystem ID of the FSx for OpenZFS filesystem (null if fsx_openzfs_enabled is false)"
+  value       = module.cluster.fsx_openzfs_id
+}
+
+output "fsx_openzfs_dns_name" {
+  description = "DNS name of the FSx for OpenZFS filesystem (null if fsx_openzfs_enabled is false)"
+  value       = module.cluster.fsx_openzfs_dns_name
+}
+
+output "fsx_openzfs_root_volume_id" {
+  description = "Root volume ID of the FSx for OpenZFS filesystem, used as the CSI parent volume (null if fsx_openzfs_enabled is false)"
+  value       = module.cluster.fsx_openzfs_root_volume_id
+}
+
+output "fsx_openzfs_csi_role_arn" {
+  description = "IAM role ARN for the FSx for OpenZFS CSI controller pod identity association (null if fsx_openzfs_enabled is false)"
+  value       = module.cluster.fsx_openzfs_csi_role_arn
+}
+
 output "kubeconfig_command" {
   description = "Command to update kubeconfig"
   value       = module.cluster.kubeconfig_command
