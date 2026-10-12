@@ -76,6 +76,10 @@ resource "aws_fsx_openzfs_file_system" "this" {
     # DataCompressionType. LZ4 only covers data written to the root volume
     # directly, and is cheap enough to be a safe default there.
     data_compression_type = "LZ4"
+    # The root volume is never mounted for data, so its export is read-only and
+    # squashes root. Child volumes take their own export options from the
+    # StorageClass, and crossmnt still lets a root mount reach them under
+    # each child's own settings.
     nfs_exports {
       # One entry per IPv4 CIDR on the VPC, primary and secondary, so nodes in
       # subnets carved from a secondary CIDR are not refused by the export.
@@ -87,7 +91,7 @@ resource "aws_fsx_openzfs_file_system" "this" {
 
         content {
           clients = client_configurations.value
-          options = ["rw", "crossmnt", "no_root_squash"]
+          options = ["ro", "crossmnt"]
         }
       }
     }

@@ -77,6 +77,11 @@ run "multi_az_by_default" {
   }
 
   assert {
+    condition     = alltrue([for c in aws_fsx_openzfs_file_system.this.root_volume_configuration[0].nfs_exports[0].client_configurations : toset(c.options) == toset(["ro", "crossmnt"])])
+    error_message = "The root volume export must be read-only and squash root; workloads use child volumes."
+  }
+
+  assert {
     condition = (
       aws_fsx_openzfs_file_system.this.automatic_backup_retention_days == 7 &&
       aws_fsx_openzfs_file_system.this.skip_final_backup == false &&

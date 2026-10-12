@@ -184,7 +184,7 @@ module "aws_lb_controller_pod_identity" {
   tags = var.tags
 }
 
-# The Cluster Autoscaler is not an EKS-managed addon, so the association is configured 
+# The Cluster Autoscaler is not an EKS-managed addon, so the association is configured
 # via the pod-identity module's `associations` argument. Consumers are expected to install
 # the Cluster Autoscaler helm chart separately.
 module "cluster_autoscaler_pod_identity" {
