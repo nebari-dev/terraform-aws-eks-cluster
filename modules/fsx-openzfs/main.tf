@@ -98,7 +98,7 @@ resource "aws_fsx_openzfs_file_system" "this" {
   lifecycle {
     precondition {
       condition     = !local.multi_az || length(var.subnet_ids) >= 2
-      error_message = "MULTI_AZ_1 needs at least two private subnets in different AZs."
+      error_message = "MULTI_AZ_1 needs at least two private subnets. The first two must also be in different AZs."
     }
 
     precondition {

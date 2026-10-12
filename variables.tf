@@ -45,7 +45,7 @@ variable "existing_vpc_id" {
 }
 
 variable "existing_private_subnet_ids" {
-  description = "List of existing private subnet IDs to use if not creating a new VPC."
+  description = "List of existing private subnet IDs to use if not creating a new VPC. With FSx for OpenZFS enabled, the first subnet (the first two for MULTI_AZ_1, in different AZs) hosts the filesystem, so reordering the list replaces the filesystem and loses its data."
   type        = list(string)
   default     = []
 
@@ -362,7 +362,7 @@ variable "fsx_openzfs_enabled" {
 }
 
 variable "fsx_openzfs_deployment_type" {
-  description = "FSx for OpenZFS deployment type. MULTI_AZ_1 spans the first two private subnets and fails over between them; SINGLE_AZ_2 is cheaper but lives in the first private subnet only."
+  description = "FSx for OpenZFS deployment type. MULTI_AZ_1 spans the first two private subnets and fails over between them; SINGLE_AZ_2 is cheaper but lives in the first private subnet only. Changing it replaces the filesystem and loses its data."
   type        = string
   default     = "MULTI_AZ_1"
 
