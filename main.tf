@@ -47,6 +47,7 @@ module "ebs_csi_pod_identity" {
   name = "${var.project_name}-aws-ebs-csi"
 
   attach_aws_ebs_csi_policy = true
+  aws_ebs_csi_kms_arns      = var.ebs_csi_kms_key_arns
 
   tags = var.tags
 }
