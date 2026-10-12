@@ -18,7 +18,7 @@ output "security_group_id" {
   value       = aws_security_group.this.id
 }
 
-output "csi_role_arn" {
+output "csi_driver_role_arn" {
   description = "IAM role ARN for the FSx for OpenZFS CSI controller pod identity association"
   value       = module.csi_pod_identity.iam_role_arn
 }

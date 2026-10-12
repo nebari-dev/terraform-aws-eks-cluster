@@ -188,7 +188,7 @@ module "cluster" {
 | <a name="output_efs_csi_driver_role_arn"></a> [efs\_csi\_driver\_role\_arn](#output\_efs\_csi\_driver\_role\_arn) | IAM role ARN for the EFS CSI driver (null if EFS not enabled) |
 | <a name="output_efs_dns_name"></a> [efs\_dns\_name](#output\_efs\_dns\_name) | The DNS name of the EFS file system (null if EFS not enabled) |
 | <a name="output_efs_id"></a> [efs\_id](#output\_efs\_id) | The ID of the EFS file system (null if EFS not enabled) |
-| <a name="output_fsx_openzfs_csi_role_arn"></a> [fsx\_openzfs\_csi\_role\_arn](#output\_fsx\_openzfs\_csi\_role\_arn) | IAM role ARN for the FSx for OpenZFS CSI controller pod identity association (null if fsx\_openzfs\_enabled is false) |
+| <a name="output_fsx_openzfs_csi_driver_role_arn"></a> [fsx\_openzfs\_csi\_driver\_role\_arn](#output\_fsx\_openzfs\_csi\_driver\_role\_arn) | IAM role ARN for the FSx for OpenZFS CSI controller pod identity association (null if fsx\_openzfs\_enabled is false) |
 | <a name="output_fsx_openzfs_dns_name"></a> [fsx\_openzfs\_dns\_name](#output\_fsx\_openzfs\_dns\_name) | DNS name of the FSx for OpenZFS filesystem (null if fsx\_openzfs\_enabled is false) |
 | <a name="output_fsx_openzfs_id"></a> [fsx\_openzfs\_id](#output\_fsx\_openzfs\_id) | Filesystem ID of the FSx for OpenZFS filesystem (null if fsx\_openzfs\_enabled is false) |
 | <a name="output_fsx_openzfs_root_volume_id"></a> [fsx\_openzfs\_root\_volume\_id](#output\_fsx\_openzfs\_root\_volume\_id) | Root volume ID of the FSx for OpenZFS filesystem, used as the CSI parent volume (null if fsx\_openzfs\_enabled is false) |

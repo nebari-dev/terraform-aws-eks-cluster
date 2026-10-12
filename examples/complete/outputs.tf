@@ -119,9 +119,9 @@ output "fsx_openzfs_root_volume_id" {
   value       = module.cluster.fsx_openzfs_root_volume_id
 }
 
-output "fsx_openzfs_csi_role_arn" {
+output "fsx_openzfs_csi_driver_role_arn" {
   description = "IAM role ARN for the FSx for OpenZFS CSI controller pod identity association (null if fsx_openzfs_enabled is false)"
-  value       = module.cluster.fsx_openzfs_csi_role_arn
+  value       = module.cluster.fsx_openzfs_csi_driver_role_arn
 }
 
 output "kubeconfig_command" {
