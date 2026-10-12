@@ -99,6 +99,12 @@ resource "aws_fsx_openzfs_file_system" "this" {
 
   tags = merge(var.tags, { Name = "${var.project_name}-fsx-openzfs" })
 
+  # FSx checks at CreateFileSystem that the security group already allows NFS
+  # on TCP 2049. The filesystem only references the group itself, so without
+  # this, Terraform creates the rules in parallel with it and the create fails
+  # with InvalidNetworkSettings whenever the filesystem wins the race.
+  depends_on = [aws_vpc_security_group_ingress_rule.this]
+
   lifecycle {
     precondition {
       condition     = !local.multi_az || length(var.subnet_ids) >= 2
