@@ -139,6 +139,9 @@ output "longhorn_backup_role_arn" {
   value       = one(module.longhorn_backup[*].pod_identity_role_arn)
 }
 
+################################################################################
+# FSx for OpenZFS
+################################################################################
 output "fsx_openzfs_id" {
   description = "Filesystem ID of the FSx for OpenZFS filesystem (null if fsx_openzfs_enabled is false)"
   value       = one(module.fsx_openzfs[*].id)
