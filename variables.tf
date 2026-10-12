@@ -362,49 +362,27 @@ variable "fsx_openzfs_enabled" {
 }
 
 variable "fsx_openzfs_deployment_type" {
-  description = "FSx for OpenZFS deployment type. MULTI_AZ_1 spans the first two private subnets and fails over between them; SINGLE_AZ_2 is cheaper but lives in the first private subnet only. Changing it replaces the filesystem and loses its data."
+  description = "FSx for OpenZFS deployment type. MULTI_AZ_1 spans the first two private subnets and fails over between them; SINGLE_AZ_2 is cheaper but lives in the first private subnet only. Changing it replaces the filesystem and loses its data. Validated by the fsx-openzfs submodule."
   type        = string
   default     = "MULTI_AZ_1"
-
-  validation {
-    condition     = contains(["MULTI_AZ_1", "SINGLE_AZ_2"], var.fsx_openzfs_deployment_type)
-    error_message = "fsx_openzfs_deployment_type must be MULTI_AZ_1 or SINGLE_AZ_2."
-  }
 }
 
 variable "fsx_openzfs_storage_capacity" {
-  description = "Storage capacity of the FSx for OpenZFS filesystem in GiB, from 64 to 524288."
+  description = "Storage capacity of the FSx for OpenZFS filesystem in GiB, from 64 to 524288. Validated by the fsx-openzfs submodule."
   type        = number
   default     = 64
-
-  # https://docs.aws.amazon.com/fsx/latest/APIReference/API_CreateFileSystem.html#FSx-CreateFileSystem-request-StorageCapacity
-  validation {
-    condition     = var.fsx_openzfs_storage_capacity >= 64 && var.fsx_openzfs_storage_capacity <= 524288
-    error_message = "fsx_openzfs_storage_capacity must be between 64 and 524288 GiB."
-  }
 }
 
 variable "fsx_openzfs_throughput" {
-  description = "Provisioned throughput of the FSx for OpenZFS filesystem in MBps: 160, 320, 640, 1280, 2560, 3840, 5120, 7680 or 10240."
+  description = "Provisioned throughput of the FSx for OpenZFS filesystem in MBps: 160, 320, 640, 1280, 2560, 3840, 5120, 7680 or 10240. Validated by the fsx-openzfs submodule."
   type        = number
   default     = 160
-
-  # https://docs.aws.amazon.com/fsx/latest/APIReference/API_CreateFileSystemOpenZFSConfiguration.html#FSx-Type-CreateFileSystemOpenZFSConfiguration-ThroughputCapacity
-  validation {
-    condition     = contains([160, 320, 640, 1280, 2560, 3840, 5120, 7680, 10240], var.fsx_openzfs_throughput)
-    error_message = "fsx_openzfs_throughput must be one of 160, 320, 640, 1280, 2560, 3840, 5120, 7680 or 10240."
-  }
 }
 
 variable "fsx_openzfs_automatic_backup_retention_days" {
-  description = "Days to keep automatic daily backups of the FSx for OpenZFS filesystem, from 0 to 90. 0 disables automatic backups."
+  description = "Days to keep automatic daily backups of the FSx for OpenZFS filesystem, from 0 to 90. 0 disables automatic backups. Validated by the fsx-openzfs submodule."
   type        = number
   default     = 7
-
-  validation {
-    condition     = var.fsx_openzfs_automatic_backup_retention_days >= 0 && var.fsx_openzfs_automatic_backup_retention_days <= 90
-    error_message = "fsx_openzfs_automatic_backup_retention_days must be between 0 and 90."
-  }
 }
 
 variable "fsx_openzfs_skip_final_backup" {

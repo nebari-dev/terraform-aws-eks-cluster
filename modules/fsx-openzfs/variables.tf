@@ -36,7 +36,7 @@ variable "deployment_type" {
 
   validation {
     condition     = contains(["MULTI_AZ_1", "SINGLE_AZ_2"], var.deployment_type)
-    error_message = "deployment_type must be MULTI_AZ_1 or SINGLE_AZ_2."
+    error_message = "FSx for OpenZFS deployment type must be MULTI_AZ_1 or SINGLE_AZ_2."
   }
 }
 
@@ -48,7 +48,7 @@ variable "storage_capacity" {
   # https://docs.aws.amazon.com/fsx/latest/APIReference/API_CreateFileSystem.html#FSx-CreateFileSystem-request-StorageCapacity
   validation {
     condition     = var.storage_capacity >= 64 && var.storage_capacity <= 524288
-    error_message = "storage_capacity must be between 64 and 524288 GiB."
+    error_message = "FSx for OpenZFS storage capacity must be between 64 and 524288 GiB."
   }
 }
 
@@ -60,7 +60,7 @@ variable "throughput" {
   # https://docs.aws.amazon.com/fsx/latest/APIReference/API_CreateFileSystemOpenZFSConfiguration.html#FSx-Type-CreateFileSystemOpenZFSConfiguration-ThroughputCapacity
   validation {
     condition     = contains([160, 320, 640, 1280, 2560, 3840, 5120, 7680, 10240], var.throughput)
-    error_message = "throughput must be one of 160, 320, 640, 1280, 2560, 3840, 5120, 7680 or 10240."
+    error_message = "FSx for OpenZFS throughput must be one of 160, 320, 640, 1280, 2560, 3840, 5120, 7680 or 10240 MBps."
   }
 }
 
@@ -71,7 +71,7 @@ variable "automatic_backup_retention_days" {
 
   validation {
     condition     = var.automatic_backup_retention_days >= 0 && var.automatic_backup_retention_days <= 90
-    error_message = "automatic_backup_retention_days must be between 0 and 90."
+    error_message = "FSx for OpenZFS automatic backup retention must be between 0 and 90 days."
   }
 }
 
