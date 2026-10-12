@@ -8,8 +8,8 @@ module "cluster" {
   existing_vpc_id             = aws_vpc.main.id
   existing_private_subnet_ids = aws_subnet.private[*].id
 
-  # All private subnets share one route table. FSx for OpenZFS Multi-AZ adds
-  # the route to its endpoint here.
+  # All private subnets share one route table. Only used by a MULTI_AZ_1 FSx for
+  # OpenZFS filesystem, which adds the route to its endpoint here.
   existing_private_route_table_ids = [aws_route_table.private.id]
 
   # Use existing security group
@@ -51,7 +51,10 @@ module "cluster" {
   # Enable EFS
   efs_enabled = true
 
-  fsx_openzfs_enabled = true
+  # FSx for OpenZFS. SINGLE_AZ_2 here and MULTI_AZ_1 in the complete example, so
+  # the two examples cover both deployment types.
+  fsx_openzfs_enabled         = true
+  fsx_openzfs_deployment_type = "SINGLE_AZ_2"
 
   tags = {
     Example = "existing-resources"
