@@ -9,7 +9,7 @@ variable "cluster_name" {
 }
 
 variable "vpc_id" {
-  description = "ID of the VPC the filesystem is placed in. Its CIDR is the NFS export client range."
+  description = "ID of the VPC the filesystem is placed in. Its IPv4 CIDRs are the NFS export client ranges."
   type        = string
 }
 

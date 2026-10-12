@@ -3,9 +3,16 @@
 # resources the module plans and how they are wired.
 
 mock_provider "aws" {
+  # A primary and a secondary CIDR, plus one being removed that the export
+  # must leave out.
   mock_data "aws_vpc" {
     defaults = {
       cidr_block = "10.10.0.0/16"
+      cidr_block_associations = [
+        { association_id = "vpc-cidr-assoc-primary", cidr_block = "10.10.0.0/16", state = "associated" },
+        { association_id = "vpc-cidr-assoc-secondary", cidr_block = "100.64.0.0/16", state = "associated" },
+        { association_id = "vpc-cidr-assoc-removed", cidr_block = "172.16.0.0/16", state = "disassociating" },
+      ]
     }
   }
 
@@ -65,8 +72,8 @@ run "multi_az_by_default" {
   }
 
   assert {
-    condition     = [for c in aws_fsx_openzfs_file_system.this.root_volume_configuration[0].nfs_exports[0].client_configurations : c.clients] == ["10.10.0.0/16"]
-    error_message = "NFS exports must be scoped to the VPC CIDR."
+    condition     = toset([for c in aws_fsx_openzfs_file_system.this.root_volume_configuration[0].nfs_exports[0].client_configurations : c.clients]) == toset(["10.10.0.0/16", "100.64.0.0/16"])
+    error_message = "NFS exports must cover every associated VPC CIDR and skip the rest."
   }
 
   assert {

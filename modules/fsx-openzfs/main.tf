@@ -6,7 +6,7 @@ locals {
   multi_az = var.deployment_type == "MULTI_AZ_1"
 }
 
-# The VPC may or may not have been created by the root module, so read the CIDR
+# The VPC may or may not have been created by the root module, so read the CIDRs
 # back rather than branching on create_vpc.
 data "aws_vpc" "this" {
   id = var.vpc_id
@@ -77,9 +77,18 @@ resource "aws_fsx_openzfs_file_system" "this" {
     # directly, and is cheap enough to be a safe default there.
     data_compression_type = "LZ4"
     nfs_exports {
-      client_configurations {
-        clients = data.aws_vpc.this.cidr_block
-        options = ["rw", "crossmnt", "no_root_squash"]
+      # One entry per IPv4 CIDR on the VPC, primary and secondary, so nodes in
+      # subnets carved from a secondary CIDR are not refused by the export.
+      dynamic "client_configurations" {
+        for_each = [
+          for association in data.aws_vpc.this.cidr_block_associations : association.cidr_block
+          if association.state == "associated"
+        ]
+
+        content {
+          clients = client_configurations.value
+          options = ["rw", "crossmnt", "no_root_squash"]
+        }
       }
     }
   }
