@@ -20,14 +20,17 @@ resource "aws_security_group" "this" {
 }
 
 # 111/2049 for NFS itself, 20001-20003 for the OpenZFS mount/status/lock
-# daemons. Missing the high ports gives mounts that hang rather than fail,
-# which is a slow thing to debug. Source is the node security group, so this
-# does not depend on the VPC CIDR shape.
+# daemons, over both TCP and UDP, matching AWS's inbound rules table:
+# https://docs.aws.amazon.com/fsx/latest/OpenZFSGuide/limit-access-security-groups.html
+# Missing the high ports gives mounts that hang rather than fail, which is a
+# slow thing to debug. Source is the node security group, so this does not
+# depend on the VPC CIDR shape.
 resource "aws_vpc_security_group_ingress_rule" "this" {
   for_each = {
     nfs-tcp     = { from = 2049, to = 2049, proto = "tcp" }
     portmap-tcp = { from = 111, to = 111, proto = "tcp" }
     daemons-tcp = { from = 20001, to = 20003, proto = "tcp" }
+    nfs-udp     = { from = 2049, to = 2049, proto = "udp" }
     portmap-udp = { from = 111, to = 111, proto = "udp" }
     daemons-udp = { from = 20001, to = 20003, proto = "udp" }
   }

@@ -58,10 +58,10 @@ run "multi_az_by_default" {
 
   assert {
     condition = (
-      length(aws_vpc_security_group_ingress_rule.this) == 5 &&
+      length(aws_vpc_security_group_ingress_rule.this) == 6 &&
       alltrue([for r in aws_vpc_security_group_ingress_rule.this : r.referenced_security_group_id == "sg-0123456789abcdef0"])
     )
-    error_message = "NFS security group must open all five NFS/OpenZFS port rules to the node security group."
+    error_message = "NFS security group must open all six NFS/OpenZFS port rules to the node security group."
   }
 
   assert {
