@@ -408,13 +408,13 @@ variable "fsx_openzfs_automatic_backup_retention_days" {
 }
 
 variable "fsx_openzfs_skip_final_backup" {
-  description = "Skip the final backup when the FSx for OpenZFS filesystem is deleted. The final backup is kept after the cluster is destroyed and must be deleted separately."
+  description = "Skip the final backup when the FSx for OpenZFS filesystem is deleted. The final backup is kept after the cluster is destroyed and must be deleted separately. Changing this requires an apply before destroy."
   type        = bool
   default     = false
 }
 
 variable "fsx_openzfs_delete_child_volumes_on_destroy" {
-  description = "Delete the child volumes and snapshots created by the FSx for OpenZFS CSI driver together with the filesystem. When false, destroy fails while any remain."
+  description = "Delete the child volumes and snapshots created by the FSx for OpenZFS CSI driver together with the filesystem. When false, destroy fails while any remain. Changing this requires an apply before destroy."
   type        = bool
   default     = false
 }

@@ -76,13 +76,13 @@ variable "automatic_backup_retention_days" {
 }
 
 variable "skip_final_backup" {
-  description = "Skip the final backup when the filesystem is deleted."
+  description = "Skip the final backup when the filesystem is deleted. Changing this requires an apply before destroy."
   type        = bool
   default     = false
 }
 
 variable "delete_child_volumes_on_destroy" {
-  description = "Delete the CSI-created child volumes and snapshots together with the filesystem. When false, destroy fails while any remain."
+  description = "Delete the CSI-created child volumes and snapshots together with the filesystem. When false, destroy fails while any remain. Changing this requires an apply before destroy."
   type        = bool
   default     = false
 }
