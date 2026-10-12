@@ -112,6 +112,22 @@ resource "aws_fsx_openzfs_file_system" "this" {
 # driver provisions whole filesystems (ResourceType: filesystem). Here
 # Terraform owns the filesystem and the driver only manages child volumes and
 # snapshots under its root volume (ResourceType: volume).
+#
+# Write actions are scoped to this filesystem where IAM allows it. Volume ARNs
+# embed the filesystem ID, so volume actions, and CreateSnapshot through the
+# volume it snapshots, cannot touch other filesystems. Snapshot ARNs embed only
+# the volume ID, so DeleteSnapshot is limited by the tag the driver puts on
+# every snapshot it creates instead. That tag is not cluster-specific, so it
+# keeps the driver away from snapshots it did not create, not from those of
+# other clusters' drivers. Resource types per action:
+# https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonfsx.html
+locals {
+  # "arn:<partition>:fsx:<region>:<account>:", taken from the filesystem ARN.
+  fsx_arn_prefix = trimsuffix(aws_fsx_openzfs_file_system.this.arn, "file-system/${aws_fsx_openzfs_file_system.this.id}")
+  volume_arns    = "${local.fsx_arn_prefix}volume/${aws_fsx_openzfs_file_system.this.id}/*"
+  snapshot_arns  = "${local.fsx_arn_prefix}snapshot/*"
+}
+
 module "csi_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
   version = "2.7.0"
@@ -122,20 +138,38 @@ module "csi_pod_identity" {
   custom_policy_description = "Permissions for the FSx for OpenZFS CSI driver"
   policy_statements = [
     {
-      sid = "FSxOpenZFSVolumes"
+      # Describe* support no resource-level permissions.
+      sid = "FSxOpenZFSRead"
       actions = [
         "fsx:DescribeFileSystems",
-        "fsx:CreateVolume",
-        "fsx:DeleteVolume",
         "fsx:DescribeVolumes",
-        "fsx:CreateSnapshot",
-        "fsx:DeleteSnapshot",
         "fsx:DescribeSnapshots",
-        "fsx:TagResource",
         "fsx:ListTagsForResource",
       ]
       resources = ["*"]
-    }
+    },
+    {
+      # CreateVolume also checks the origin snapshot when restoring from one,
+      # and CreateSnapshot and TagResource check the new snapshot.
+      sid = "FSxOpenZFSVolumes"
+      actions = [
+        "fsx:CreateVolume",
+        "fsx:DeleteVolume",
+        "fsx:CreateSnapshot",
+        "fsx:TagResource",
+      ]
+      resources = [local.volume_arns, local.snapshot_arns]
+    },
+    {
+      sid       = "FSxOpenZFSDeleteSnapshots"
+      actions   = ["fsx:DeleteSnapshot"]
+      resources = [local.snapshot_arns]
+      condition = [{
+        test     = "StringEquals"
+        variable = "aws:ResourceTag/fsx.openzfs.csi.aws.com/cluster"
+        values   = ["true"]
+      }]
+    },
   ]
 
   associations = {
