@@ -4,12 +4,14 @@ on:
   pull_request:
     paths:
       - "**.tf"
+      - "**.tftest.hcl"
       - ".github/workflows/ci.yml"
   push:
     branches:
       - main
     paths:
       - "**.tf"
+      - "**.tftest.hcl"
       - ".github/workflows/ci.yml"
 
 env:
@@ -48,6 +50,33 @@ jobs:
 
       - name: OpenTofu Validate
         run: tofu validate
+
+  test-unit:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - modules/userdata
+          - modules/fsx-openzfs
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.11.2
+
+      - name: OpenTofu Init
+        working-directory: ${{ matrix.module }}
+        run: tofu init -backend=false
+
+      - name: OpenTofu Test
+        working-directory: ${{ matrix.module }}
+        run: tofu test
 
   lint:
     runs-on: ubuntu-latest

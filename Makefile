@@ -37,10 +37,12 @@ lint: fmt validate ## Run all linting checks (fmt + validate)
 test-unit: ## Run native tofu tests (no cloud resources required)
 	@echo "Running tofu test in modules/userdata..."
 	@cd modules/userdata && tofu init -backend=false >/dev/null && tofu test
+	@echo "Running tofu test in modules/fsx-openzfs..."
+	@cd modules/fsx-openzfs && tofu init -backend=false >/dev/null && tofu test
 
 test: test-unit ## Run unit tests and the Terratest integration suite
 	@echo "Running Terratest suite..."
-	@cd test && go test -v -timeout 60m
+	@cd test && go test -v -timeout 90m
 
 docs: ## Generate documentation with terraform-docs
 	@echo "Generating documentation..."

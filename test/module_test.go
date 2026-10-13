@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -35,6 +36,10 @@ func writeTestOverride(t *testing.T, exampleDir string) {
 				// values set in the examples.
 				"endpoint_public_access":                   true,
 				"enable_cluster_creator_admin_permissions": true,
+				// Make sure to skip final backup to allow a flawless destroy when running
+				// the tests
+				"fsx_openzfs_skip_final_backup":               true,
+				"fsx_openzfs_delete_child_volumes_on_destroy": true,
 			},
 		},
 	}
@@ -99,6 +104,26 @@ func testEBSCSIDriver(t *testing.T, kubectlOptions *k8s.KubectlOptions) {
 	k8s.WaitUntilPodAvailable(t, nsOptions, "ebs-csi-test-pod", waitRetries, waitInterval)
 }
 
+// testFSxOpenZFSOutputs validates that the FSx for OpenZFS outputs consumers rely on are
+// populated. A successful apply already means the filesystem reached AVAILABLE, so this
+// catches outputs wired to null or to the wrong attribute.
+func testFSxOpenZFSOutputs(t *testing.T, terraformOptions *terraform.Options) {
+	t.Helper()
+
+	prefixes := map[string]string{
+		"fsx_openzfs_id":                  "fs-",
+		"fsx_openzfs_root_volume_id":      "fsvol-",
+		"fsx_openzfs_csi_driver_role_arn": "arn:",
+	}
+
+	for output, prefix := range prefixes {
+		value := terraform.Output(t, terraformOptions, output)
+		if !strings.HasPrefix(value, prefix) {
+			t.Errorf("output %s = %q, want a value starting with %q", output, value, prefix)
+		}
+	}
+}
+
 func TestExampleComplete(t *testing.T) {
 	t.Parallel()
 
@@ -123,6 +148,10 @@ func TestExampleComplete(t *testing.T) {
 
 	t.Run("ebs_csi_driver", func(t *testing.T) {
 		testEBSCSIDriver(t, kubectlOptions)
+	})
+
+	t.Run("fsx_openzfs_outputs", func(t *testing.T) {
+		testFSxOpenZFSOutputs(t, terraformOptions)
 	})
 }
 
@@ -150,5 +179,9 @@ func TestExampleExistingResources(t *testing.T) {
 
 	t.Run("ebs_csi_driver", func(t *testing.T) {
 		testEBSCSIDriver(t, kubectlOptions)
+	})
+
+	t.Run("fsx_openzfs_outputs", func(t *testing.T) {
+		testFSxOpenZFSOutputs(t, terraformOptions)
 	})
 }
