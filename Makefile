@@ -39,6 +39,8 @@ test-unit: ## Run native tofu tests (no cloud resources required)
 	@cd modules/userdata && tofu init -backend=false >/dev/null && tofu test
 	@echo "Running tofu test in modules/fsx-openzfs..."
 	@cd modules/fsx-openzfs && tofu init -backend=false >/dev/null && tofu test
+	@echo "Running tofu test in the root module..."
+	@tofu init -backend=false >/dev/null && tofu test
 
 test: test-unit ## Run unit tests and the Terratest integration suite
 	@echo "Running Terratest suite..."

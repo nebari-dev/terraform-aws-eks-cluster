@@ -60,6 +60,7 @@ jobs:
         module:
           - modules/userdata
           - modules/fsx-openzfs
+          - .
 
     steps:
       - name: Checkout code

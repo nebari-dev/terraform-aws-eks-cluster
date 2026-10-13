@@ -116,6 +116,20 @@ variable "eks_kms_arn" {
   default     = null
 }
 
+variable "ebs_csi_kms_key_arns" {
+  description = "ARNs of KMS keys the EBS CSI driver may use to create, attach and encrypt volumes. Include the account's default EBS encryption key when it is customer managed, and any key a StorageClass sets in `kmsKeyId`. The AWS managed key (`alias/aws/ebs`) needs no entry. Key policies must delegate to IAM (the default \"Enable IAM User Permissions\" statement) for these permissions to take effect."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for arn in var.ebs_csi_kms_key_arns :
+      can(regex("^arn:aws[a-z-]*:kms:[a-z0-9-]+:[0-9]{12}:key/[A-Za-z0-9-]+$", arn))
+    ])
+    error_message = "Each entry in 'ebs_csi_kms_key_arns' must be a KMS key ARN (arn:<partition>:kms:<region>:<account>:key/<key-id>). Alias ARNs are not supported because IAM matches KMS permissions against the key ARN."
+  }
+}
+
 variable "cluster_enabled_log_types" {
   description = "List of control plane logging types to enable. Default: ['authenticator']. Valid values: api, audit, authenticator, controllerManager, scheduler"
   type        = list(string)
