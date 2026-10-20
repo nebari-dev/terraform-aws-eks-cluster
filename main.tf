@@ -61,6 +61,20 @@ module "node_userdata" {
   extra_ca_bundle = var.extra_ca_bundle
 }
 
+# Fails the plan when a node group names an AZ the cluster has no private subnet in.
+# AZ names are known at plan even when the subnets are not created yet.
+# One per node group that sets availability_zones.
+resource "terraform_data" "node_group_availability_zones" {
+  for_each = { for name, subnet_ids in local.node_group_subnet_ids : name => subnet_ids if subnet_ids != null }
+
+  lifecycle {
+    precondition {
+      condition     = length(setsubtract(var.node_groups[each.key].availability_zones, keys(local.private_subnet_ids_by_az))) == 0
+      error_message = "Node group ${each.key} availability_zones must be AZs with a cluster private subnet: ${join(", ", keys(local.private_subnet_ids_by_az))}."
+    }
+  }
+}
+
 module "efs_csi_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
   version = "2.7.0"
