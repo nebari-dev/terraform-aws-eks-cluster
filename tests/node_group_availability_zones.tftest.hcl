@@ -11,14 +11,6 @@ mock_provider "aws" {
   }
 }
 
-# Known subnet IDs for the created VPC, which are unknown at plan otherwise.
-override_module {
-  target = module.vpc
-  outputs = {
-    private_subnets = ["subnet-a", "subnet-b", "subnet-c"]
-  }
-}
-
 variables {
   project_name       = "az-test"
   availability_zones = ["us-west-2a", "us-west-2b", "us-west-2c"]
@@ -42,6 +34,14 @@ run "created_vpc_restricts_subnets_by_az" {
 
   plan_options {
     target = [terraform_data.node_group_availability_zones]
+  }
+
+  # Known subnet IDs for the created VPC, which are unknown at plan otherwise.
+  override_module {
+    target = module.vpc
+    outputs = {
+      private_subnets = ["subnet-a", "subnet-b", "subnet-c"]
+    }
   }
 
   assert {
@@ -107,6 +107,20 @@ run "existing_subnets_grouped_by_az" {
   assert {
     condition     = toset(local.node_group_subnet_ids["user-a"]) == toset(["subnet-1", "subnet-2"])
     error_message = "user-a should get every existing subnet in us-west-2a"
+  }
+}
+
+# Subnets created in the same apply have unknown IDs at plan. Setting
+# availability_zones must still plan, with the AZ check deferred to apply.
+run "existing_subnets_with_unknown_ids_plan" {
+  command = plan
+
+  module {
+    source = "./tests/fixtures/unknown-subnet-ids"
+  }
+
+  plan_options {
+    target = [module.cluster.terraform_data.node_group_availability_zones]
   }
 }
 

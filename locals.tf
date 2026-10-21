@@ -5,8 +5,9 @@ data "aws_availability_zones" "available" {
 data "aws_region" "current" {}
 
 # Existing subnets carry no AZ in the inputs, so read it when a node group needs it.
+# Keyed by position, since subnet IDs created in the same apply are unknown at plan.
 data "aws_subnet" "existing_private" {
-  for_each = !var.create_vpc && local.node_groups_restrict_azs ? toset(var.existing_private_subnet_ids) : toset([])
+  for_each = !var.create_vpc && local.node_groups_restrict_azs ? { for i, id in var.existing_private_subnet_ids : tostring(i) => id } : {}
 
   id = each.value
 }
