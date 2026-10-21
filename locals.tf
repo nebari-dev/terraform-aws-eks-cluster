@@ -4,6 +4,14 @@ data "aws_availability_zones" "available" {
 
 data "aws_region" "current" {}
 
+# Existing subnets carry no AZ in the inputs, so read it when a node group needs it.
+# Keyed by position, since subnet IDs created in the same apply are unknown at plan.
+data "aws_subnet" "existing_private" {
+  for_each = !var.create_vpc && local.node_groups_restrict_azs ? { for i, id in var.existing_private_subnet_ids : tostring(i) => id } : {}
+
+  id = each.value
+}
+
 locals {
 
   # Determine availability zones to use. If not specified, select up to 3 available AZs in the region.
@@ -23,6 +31,25 @@ locals {
   # Private subnet IDs to use for the EKS cluster and EFS mount targets are the ones created
   # with the VPC if existing ones are not provided.
   private_subnet_ids = var.create_vpc ? flatten(module.vpc[*].private_subnets) : var.existing_private_subnet_ids
+
+  node_groups_restrict_azs = anytrue([for config in values(var.node_groups) : length(config.availability_zones) > 0])
+
+  # Private subnet IDs by AZ, used to restrict node groups to some AZs. The VPC module
+  # creates one private subnet per AZ, in the order of local.availability_zones.
+  private_subnet_ids_by_az = var.create_vpc ? {
+    for idx, az in local.availability_zones : az => [local.private_subnet_ids[idx]]
+    } : {
+    for subnet in data.aws_subnet.existing_private : subnet.availability_zone => subnet.id...
+  }
+
+  # Private subnet IDs each node group is restricted to. null falls back to the cluster's
+  # private subnets in the EKS module. Unknown AZs map to no subnets here and fail the
+  # precondition in main.tf instead.
+  node_group_subnet_ids = {
+    for name, config in var.node_groups : name => length(config.availability_zones) > 0 ? distinct(flatten([
+      for az in config.availability_zones : local.private_subnet_ids_by_az[az] if contains(keys(local.private_subnet_ids_by_az), az)
+    ])) : null
+  }
 
   interface_vpc_endpoint_services = var.create_vpc ? concat(
     [
@@ -49,7 +76,7 @@ locals {
 
   node_iam_role_arn = var.create_iam_roles ? module.iam.node_iam_role_arn : var.existing_node_iam_role_arn
 
-  # Additional security groups to attach to node groups, depending on whether VPC endpoints 
+  # Additional security groups to attach to node groups, depending on whether VPC endpoints
   # are created and whether an existing security group is provided
   additional_node_security_group_ids = compact([
     one(module.vpc_endpoints[*].security_group_id),
@@ -64,6 +91,8 @@ locals {
       instance_types = [config.instance]
       capacity_type  = config.spot ? "SPOT" : "ON_DEMAND"
       ami_type       = config.ami_type
+
+      subnet_ids = local.node_group_subnet_ids[name]
 
       # Only track the latest AMI from SSM when asked to with "latest": it is
       # re-resolved on every plan, so any apply after AWS publishes a new AMI

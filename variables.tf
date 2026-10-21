@@ -194,6 +194,7 @@ variable "node_groups" {
     - disk_size: Root disk size in GB (default: 20)
     - labels: Map of Kubernetes labels to apply to nodes (default: {})
     - taints: List of Kubernetes taints with keys: key, value, effect
+    - availability_zones: Restrict the node group to the private subnets in these AZs, which must be among the cluster's AZs. Use one AZ per group so the cluster autoscaler can add a node in the AZ of a pod's EBS volume. Changing it replaces the node group. When empty, the group spans every private subnet (default: [])
   EOT
   type = map(object({
     instance  = string
@@ -210,6 +211,7 @@ variable "node_groups" {
       value  = string
       effect = string # NO_SCHEDULE, NO_EXECUTE, or PREFER_NO_SCHEDULE
     })), [])
+    availability_zones = optional(list(string), [])
   }))
 
   validation {
