@@ -241,25 +241,44 @@ module "vpc_endpoints" {
   tags = var.tags
 }
 
-# Optional S3 bucket and EKS Pod Identity association for Longhorn off-cluster
-# backups. Disabled by default; enabled by consumers (e.g. Nebari
-# Infrastructure Core) that schedule Longhorn snapshots/backups to S3.
-module "longhorn_backup" {
-  source = "./modules/longhorn-backup"
+# The Longhorn backup bucket used to live in the longhorn_backup submodule.
+# These blocks drop the bucket and its settings from state without deleting
+# them, so existing backups survive the upgrade and the owner deletes the bucket
+# when they no longer need it. The Pod Identity role and association are not
+# listed, so they are destroyed. No-op on clusters that never created a bucket.
+removed {
+  from = module.longhorn_backup.aws_s3_bucket.this
+  lifecycle {
+    destroy = false
+  }
+}
 
-  count = var.longhorn_backup_bucket_create || var.enable_longhorn_backup_pod_identity ? 1 : 0
+removed {
+  from = module.longhorn_backup.aws_s3_bucket_versioning.this
+  lifecycle {
+    destroy = false
+  }
+}
 
-  project_name = var.project_name
+removed {
+  from = module.longhorn_backup.aws_s3_bucket_lifecycle_configuration.this
+  lifecycle {
+    destroy = false
+  }
+}
 
-  create_bucket                      = var.longhorn_backup_bucket_create
-  bucket_name                        = var.longhorn_backup_bucket_name
-  force_destroy                      = var.longhorn_backup_bucket_force_destroy
-  noncurrent_version_expiration_days = var.longhorn_backup_noncurrent_version_expiration_days
+removed {
+  from = module.longhorn_backup.aws_s3_bucket_server_side_encryption_configuration.this
+  lifecycle {
+    destroy = false
+  }
+}
 
-  enable_pod_identity = var.enable_longhorn_backup_pod_identity
-  cluster_name        = module.eks.cluster_name
-
-  tags = var.tags
+removed {
+  from = module.longhorn_backup.aws_s3_bucket_public_access_block.this
+  lifecycle {
+    destroy = false
+  }
 }
 
 # Optional FSx for OpenZFS filesystem, its NFS security group, and the CSI
