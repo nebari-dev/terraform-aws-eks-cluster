@@ -8,17 +8,22 @@ module "vpc" {
 
   cidr = var.vpc_cidr_block
 
-  azs             = local.availability_zones
+  azs             = local.vpc_availability_zones
   create_igw      = true
   private_subnets = local.private_subnets
   public_subnets  = local.public_subnets
 
-  private_subnet_tags = { "kubernetes.io/role/internal-elb" = "1" }
-  public_subnet_tags  = { "kubernetes.io/role/elb" = "1" }
+  # With one AZ, only that AZ's private subnet gets the internal load balancer tag, so
+  # the AWS Load Balancer Controller never uses the control-plane-only subnet.
+  private_subnet_tags        = local.single_az ? {} : { "kubernetes.io/role/internal-elb" = "1" }
+  private_subnet_tags_per_az = local.single_az ? { (local.availability_zones[0]) = { "kubernetes.io/role/internal-elb" = "1" } } : {}
+  public_subnet_tags         = { "kubernetes.io/role/elb" = "1" }
 
+  # One NAT gateway per AZ. With one AZ, the VPC module also knows the control plane AZ,
+  # so ask for a single NAT gateway, which it puts in the first AZ.
   enable_nat_gateway     = true
-  single_nat_gateway     = false
-  one_nat_gateway_per_az = true
+  single_nat_gateway     = local.single_az
+  one_nat_gateway_per_az = !local.single_az
 
   enable_dns_hostnames = true
   enable_dns_support   = true
@@ -248,7 +253,7 @@ module "vpc_endpoints" {
   project_name = var.project_name
 
   vpc_id          = one(module.vpc[*].vpc_id)
-  subnet_ids      = flatten(module.vpc[*].private_subnets)
+  subnet_ids      = local.private_subnet_ids
   route_table_ids = concat(flatten(module.vpc[*].public_route_table_ids), flatten(module.vpc[*].private_route_table_ids))
 
   interface_vpc_endpoint_services = local.interface_vpc_endpoint_services

@@ -4,6 +4,21 @@ data "aws_availability_zones" "available" {
 
 data "aws_region" "current" {}
 
+# Candidates for a second AZ for the control plane when the module creates a VPC with
+# one AZ, since EKS needs control plane subnets in two AZs. Excludes the AZs where EKS
+# can't create control planes, by zone ID because AZ names differ between accounts.
+data "aws_availability_zones" "control_plane" {
+  count = local.single_az ? 1 : 0
+
+  state            = "available"
+  exclude_zone_ids = ["use1-az3", "usw1-az2", "cac1-az3"]
+
+  filter {
+    name   = "opt-in-status"
+    values = ["opt-in-not-required"]
+  }
+}
+
 # Existing subnets carry no AZ in the inputs, so read it when a node group needs it.
 # Keyed by position, since subnet IDs created in the same apply are unknown at plan.
 data "aws_subnet" "existing_private" {
@@ -29,19 +44,33 @@ locals {
     min(3, length(data.aws_availability_zones.available.names))
   )
 
+  # A created VPC with one AZ also gets a private subnet in a second AZ, used only by the
+  # control plane. Nodes, NAT, endpoints and storage stay in the first AZ, and growing to
+  # this second AZ later turns that subnet into a regular node subnet.
+  single_az = var.create_vpc && length(local.availability_zones) == 1
+
+  control_plane_availability_zone = local.single_az ? [
+    for name in sort(one(data.aws_availability_zones.control_plane[*].names)) : name
+    if !contains(local.availability_zones, name)
+  ][0] : null
+
+  # AZs the VPC module creates private subnets in.
+  vpc_availability_zones = local.single_az ? concat(local.availability_zones, [local.control_plane_availability_zone]) : local.availability_zones
+
   # Calculate subnet CIDRs using cidrsubnet
   # For a /16 VPC, creates /20 subnets (16 + 4 = 20)
   # Public subnets:  indices 0-7  (10.10.0.0/20, 10.10.16.0/20, 10.10.32.0/20, ...)
   # Private subnets: indices 8-15 (10.10.128.0/20, 10.10.144.0/20, 10.10.160.0/20, ...)
   public_subnets  = [for i in range(length(local.availability_zones)) : cidrsubnet(var.vpc_cidr_block, 4, i)]
-  private_subnets = [for i in range(length(local.availability_zones)) : cidrsubnet(var.vpc_cidr_block, 4, i + 8)]
+  private_subnets = [for i in range(length(local.vpc_availability_zones)) : cidrsubnet(var.vpc_cidr_block, 4, i + 8)]
 
-  # Private subnet IDs to use for the EKS cluster and EFS mount targets are the ones created
-  # with the VPC if existing ones are not provided.
-  private_subnet_ids = var.create_vpc ? flatten(module.vpc[*].private_subnets) : var.existing_private_subnet_ids
+  # Private subnet IDs for nodes, endpoints, EFS and FSx: the ones created with the VPC
+  # in local.availability_zones, which excludes the control-plane-only subnet, or the
+  # existing ones.
+  private_subnet_ids = var.create_vpc ? slice(flatten(module.vpc[*].private_subnets), 0, length(local.availability_zones)) : var.existing_private_subnet_ids
 
   # Control plane subnets. Empty makes the EKS module use the node subnets.
-  control_plane_subnet_ids = var.create_vpc ? [] : var.existing_control_plane_subnet_ids
+  control_plane_subnet_ids = var.create_vpc ? (local.single_az ? flatten(module.vpc[*].private_subnets) : []) : var.existing_control_plane_subnet_ids
 
   # Existing subnets the control plane uses, following the EKS module's fallback to
   # the node subnets when no control plane subnets are set.
