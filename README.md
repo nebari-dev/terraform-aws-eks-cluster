@@ -118,9 +118,12 @@ module "cluster" {
 
 | Name | Type |
 |------|------|
+| [terraform_data.control_plane_availability_zones](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) | resource |
 | [terraform_data.node_group_availability_zones](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) | resource |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
+| [aws_availability_zones.control_plane](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
+| [aws_subnet.existing_control_plane](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet) | data source |
 | [aws_subnet.existing_private](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet) | data source |
 
 ## Inputs
@@ -189,6 +192,7 @@ module "cluster" {
 | <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | The name of the EKS cluster |
 | <a name="output_cluster_oidc_issuer_url"></a> [cluster\_oidc\_issuer\_url](#output\_cluster\_oidc\_issuer\_url) | The URL on the EKS cluster for the OpenID Connect identity provider |
 | <a name="output_cluster_security_group_id"></a> [cluster\_security\_group\_id](#output\_cluster\_security\_group\_id) | Security group ID attached to the EKS cluster |
+| <a name="output_control_plane_availability_zone"></a> [control\_plane\_availability\_zone](#output\_control\_plane\_availability\_zone) | AZ of the control-plane-only private subnet the module adds when it creates a VPC with one AZ. Add it to availability\_zones to grow the cluster to two AZs without changing the control plane. Null otherwise. |
 | <a name="output_efs_arn"></a> [efs\_arn](#output\_efs\_arn) | The ARN of the EFS file system (null if EFS not enabled) |
 | <a name="output_efs_csi_driver_role_arn"></a> [efs\_csi\_driver\_role\_arn](#output\_efs\_csi\_driver\_role\_arn) | IAM role ARN for the EFS CSI driver (null if EFS not enabled) |
 | <a name="output_efs_dns_name"></a> [efs\_dns\_name](#output\_efs\_dns\_name) | The DNS name of the EFS file system (null if EFS not enabled) |
@@ -204,7 +208,7 @@ module "cluster" {
 | <a name="output_node_iam_role_arn"></a> [node\_iam\_role\_arn](#output\_node\_iam\_role\_arn) | IAM role ARN used by EKS node groups |
 | <a name="output_node_security_group_id"></a> [node\_security\_group\_id](#output\_node\_security\_group\_id) | ID of the node shared security group |
 | <a name="output_oidc_provider_arn"></a> [oidc\_provider\_arn](#output\_oidc\_provider\_arn) | ARN of the OIDC Provider for EKS (for IRSA) |
-| <a name="output_private_subnet_ids"></a> [private\_subnet\_ids](#output\_private\_subnet\_ids) | List of IDs of private subnets used by the EKS cluster |
+| <a name="output_private_subnet_ids"></a> [private\_subnet\_ids](#output\_private\_subnet\_ids) | List of IDs of private subnets the nodes use. Excludes the control-plane-only subnet of a single-AZ created VPC. |
 | <a name="output_public_subnet_ids"></a> [public\_subnet\_ids](#output\_public\_subnet\_ids) | List of IDs of created public subnets (empty list if using existing subnets) |
 | <a name="output_vpc_endpoints_security_group_id"></a> [vpc\_endpoints\_security\_group\_id](#output\_vpc\_endpoints\_security\_group\_id) | Security group ID used by VPC endpoints (null if VPC endpoints not created) |
 | <a name="output_vpc_id"></a> [vpc\_id](#output\_vpc\_id) | The ID of the VPC used by the EKS cluster |
