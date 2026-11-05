@@ -130,6 +130,7 @@ module "eks" {
   vpc_id = var.create_vpc ? one(module.vpc[*].vpc_id) : var.existing_vpc_id
 
   subnet_ids                   = local.private_subnet_ids
+  control_plane_subnet_ids     = local.control_plane_subnet_ids
   endpoint_private_access      = var.endpoint_private_access
   endpoint_public_access       = var.endpoint_public_access
   endpoint_public_access_cidrs = var.endpoint_public_access_cidrs

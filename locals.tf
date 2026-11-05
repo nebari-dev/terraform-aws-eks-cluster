@@ -32,6 +32,9 @@ locals {
   # with the VPC if existing ones are not provided.
   private_subnet_ids = var.create_vpc ? flatten(module.vpc[*].private_subnets) : var.existing_private_subnet_ids
 
+  # Control plane subnets. Empty makes the EKS module use the node subnets.
+  control_plane_subnet_ids = var.create_vpc ? [] : var.existing_control_plane_subnet_ids
+
   node_groups_restrict_azs = anytrue([for config in values(var.node_groups) : length(config.availability_zones) > 0])
 
   # Private subnet IDs by AZ, used to restrict node groups to some AZs. The VPC module

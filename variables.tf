@@ -55,6 +55,12 @@ variable "existing_private_subnet_ids" {
   }
 }
 
+variable "existing_control_plane_subnet_ids" {
+  description = "Existing private subnet IDs for the EKS control plane, used if not creating a new VPC. Leave empty to use existing_private_subnet_ids. EKS needs control plane subnets in at least two AZs, so set this when the nodes run in one AZ, for example to the node subnet plus a subnet in a second AZ. Nodes, EFS and FSx keep using existing_private_subnet_ids. On an existing cluster, the new subnets must be in the AZs the cluster was created with, or EKS rejects the change."
+  type        = list(string)
+  default     = []
+}
+
 variable "existing_private_route_table_ids" {
   description = "Route tables of the existing private subnets, used if not creating a new VPC. Required for a MULTI_AZ_1 FSx for OpenZFS filesystem, which adds routes to its floating endpoint to them. Include the VPC's main route table if any of the subnets use it implicitly."
   type        = list(string)
