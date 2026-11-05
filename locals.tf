@@ -12,6 +12,14 @@ data "aws_subnet" "existing_private" {
   id = each.value
 }
 
+# The existing subnets the control plane uses, read to check they span two AZs.
+# Keyed by position for the same reason as above.
+data "aws_subnet" "existing_control_plane" {
+  for_each = var.create_vpc ? {} : { for i, id in local.effective_control_plane_subnet_ids : tostring(i) => id }
+
+  id = each.value
+}
+
 locals {
 
   # Determine availability zones to use. If not specified, select up to 3 available AZs in the region.
@@ -34,6 +42,13 @@ locals {
 
   # Control plane subnets. Empty makes the EKS module use the node subnets.
   control_plane_subnet_ids = var.create_vpc ? [] : var.existing_control_plane_subnet_ids
+
+  # Existing subnets the control plane uses, following the EKS module's fallback to
+  # the node subnets when no control plane subnets are set.
+  effective_control_plane_subnet_ids = length(var.existing_control_plane_subnet_ids) > 0 ? var.existing_control_plane_subnet_ids : var.existing_private_subnet_ids
+
+  # AZs of those subnets, checked in main.tf.
+  existing_control_plane_subnet_azs = distinct([for subnet in values(data.aws_subnet.existing_control_plane) : subnet.availability_zone])
 
   node_groups_restrict_azs = anytrue([for config in values(var.node_groups) : length(config.availability_zones) > 0])
 

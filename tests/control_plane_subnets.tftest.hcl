@@ -1,10 +1,19 @@
 # Checks the control plane subnets passed to the EKS module. Empty makes the
 # EKS module use the node subnets, so that is the default with an existing VPC,
-# and existing_control_plane_subnet_ids is passed through when set.
-# Runs against a mocked AWS provider, so no credentials or cloud resources
-# are needed.
+# and existing_control_plane_subnet_ids is passed through when set. Also checks
+# that existing control plane subnets in one AZ fail the plan. Runs against a
+# mocked AWS provider, so no credentials or cloud resources are needed.
 
 mock_provider "aws" {
+  # Every mocked subnet is in the same AZ. The mocks can't vary it per subnet, so
+  # only the failing case of the AZ check is tested here. The existing-resources
+  # integration test (test/module_test.go) covers subnets in two AZs.
+  mock_data "aws_subnet" {
+    defaults = {
+      availability_zone = "us-west-2a"
+    }
+  }
+
   # Planning the cluster needs valid ARNs and policy JSON from the mocks.
   mock_data "aws_partition" {
     defaults = {
@@ -115,5 +124,65 @@ run "created_vpc_ignores_control_plane_subnets" {
   assert {
     condition     = length(local.control_plane_subnet_ids) == 0
     error_message = "existing_control_plane_subnet_ids should be ignored when the module creates the VPC"
+  }
+}
+
+run "node_subnets_in_one_az_fail" {
+  command = plan
+
+  plan_options {
+    target = [terraform_data.control_plane_availability_zones]
+  }
+
+  variables {
+    existing_private_subnet_ids = ["subnet-a", "subnet-b"]
+  }
+
+  expect_failures = [terraform_data.control_plane_availability_zones]
+}
+
+run "control_plane_subnets_in_one_az_fail" {
+  command = plan
+
+  plan_options {
+    target = [terraform_data.control_plane_availability_zones]
+  }
+
+  variables {
+    existing_control_plane_subnet_ids = ["subnet-a", "subnet-b"]
+  }
+
+  expect_failures = [terraform_data.control_plane_availability_zones]
+}
+
+run "created_vpc_skips_check" {
+  command = plan
+
+  plan_options {
+    target = [terraform_data.control_plane_availability_zones]
+  }
+
+  variables {
+    create_vpc         = true
+    availability_zones = ["us-west-2a", "us-west-2b"]
+  }
+
+  assert {
+    condition     = length(terraform_data.control_plane_availability_zones) == 0
+    error_message = "The check should only run with an existing VPC"
+  }
+}
+
+# Subnets created in the same apply have unknown IDs at plan. The check must not
+# fail the plan then, and runs at apply instead.
+run "unknown_subnet_ids_plan" {
+  command = plan
+
+  module {
+    source = "./tests/fixtures/unknown-subnet-ids"
+  }
+
+  plan_options {
+    target = [module.cluster.terraform_data.control_plane_availability_zones]
   }
 }

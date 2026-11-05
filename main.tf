@@ -75,6 +75,21 @@ resource "terraform_data" "node_group_availability_zones" {
   }
 }
 
+# Fails the plan when the control plane subnets of an existing VPC are all in one AZ,
+# which EKS rejects at cluster creation. When the subnet IDs are unknown at plan
+# (subnets created in the same apply), this only runs at apply, and nothing makes the
+# cluster wait for it, so EKS may reject the subnets first.
+resource "terraform_data" "control_plane_availability_zones" {
+  count = var.create_vpc ? 0 : 1
+
+  lifecycle {
+    precondition {
+      condition     = length(local.existing_control_plane_subnet_azs) >= 2
+      error_message = "The control plane subnets are all in ${join(", ", local.existing_control_plane_subnet_azs)}, and EKS needs them in at least two AZs. To run the nodes in one AZ, set existing_control_plane_subnet_ids to the node subnets plus a subnet in a second AZ."
+    }
+  }
+}
+
 module "efs_csi_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
   version = "2.7.0"
