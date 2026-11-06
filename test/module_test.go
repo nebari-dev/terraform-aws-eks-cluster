@@ -2,6 +2,7 @@ package test
 
 import (
 	"encoding/json"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"github.com/gruntwork-io/terratest/modules/random"
 	"github.com/gruntwork-io/terratest/modules/shell"
 	"github.com/gruntwork-io/terratest/modules/terraform"
+	test_structure "github.com/gruntwork-io/terratest/modules/test-structure"
 )
 
 const (
@@ -21,26 +23,31 @@ const (
 	waitInterval = 10 * time.Second
 )
 
-// writeTestOverride writes a Terraform JSON override file into an example directory
-// and registers a cleanup to remove it when the test ends. The override file uses
-// Terraform's override mechanism to change values that are intentionally hardcoded
-// in the examples and that are needed for the tests to run.
-func writeTestOverride(t *testing.T, exampleDir string) {
+// writeTestOverride writes a Terraform JSON override file into an example directory.
+// The override file uses Terraform's override mechanism to change values that are
+// intentionally hardcoded in the examples and that are needed for the tests to run,
+// plus moduleArgs, extra arguments for the example's cluster module. String values
+// can reference the example's resources with "${...}", since Terraform evaluates
+// them as expressions in JSON files.
+func writeTestOverride(t *testing.T, exampleDir string, moduleArgs map[string]any) {
 	t.Helper()
+
+	cluster := map[string]any{
+		// The endpoint public access and the admin permissions are enabled so
+		// the tests can run k8s commands against the cluster, regardless of the
+		// values set in the examples.
+		"endpoint_public_access":                   true,
+		"enable_cluster_creator_admin_permissions": true,
+		// Make sure to skip final backup to allow a flawless destroy when running
+		// the tests
+		"fsx_openzfs_skip_final_backup":               true,
+		"fsx_openzfs_delete_child_volumes_on_destroy": true,
+	}
+	maps.Copy(cluster, moduleArgs)
 
 	overrides := map[string]any{
 		"module": map[string]any{
-			"cluster": map[string]any{
-				// The endpoint public access and the admin permissions are enabled so
-				// the tests can run k8s commands against the cluster, regardless of the
-				// values set in the examples.
-				"endpoint_public_access":                   true,
-				"enable_cluster_creator_admin_permissions": true,
-				// Make sure to skip final backup to allow a flawless destroy when running
-				// the tests
-				"fsx_openzfs_skip_final_backup":               true,
-				"fsx_openzfs_delete_child_volumes_on_destroy": true,
-			},
+			"cluster": cluster,
 		},
 	}
 
@@ -53,8 +60,6 @@ func writeTestOverride(t *testing.T, exampleDir string) {
 	if err := os.WriteFile(dst, data, 0600); err != nil {
 		t.Fatalf("failed to write test override: %v", err)
 	}
-
-	t.Cleanup(func() { os.Remove(dst) })
 }
 
 // configureKubectl sets up a dedicated kubeconfig for the deployed cluster.
@@ -124,22 +129,42 @@ func testFSxOpenZFSOutputs(t *testing.T, terraformOptions *terraform.Options) {
 	}
 }
 
-func TestExampleComplete(t *testing.T) {
-	t.Parallel()
+// testSinglePrivateSubnet validates that the nodes got exactly one private subnet. With
+// a created single-AZ VPC, this means the control-plane-only subnet stayed out of the
+// node subnets.
+func testSinglePrivateSubnet(t *testing.T, terraformOptions *terraform.Options) {
+	t.Helper()
 
-	exampleFolder := "../examples/complete"
-	writeTestOverride(t, exampleFolder)
+	subnets := terraform.OutputList(t, terraformOptions, "private_subnet_ids")
+	if len(subnets) != 1 {
+		t.Errorf("output private_subnet_ids = %v, want exactly one subnet", subnets)
+	}
+}
+
+// runExample deploys an example with moduleArgs applied to its cluster module, runs the
+// checks that apply to every example, and destroys it. Each run works on its own copy
+// of the repo, so two runs of the same example can't overwrite each other's override
+// file, .terraform directory or state. The copy is kept after the test, so its state
+// can be used to clean up by hand if the destroy fails.
+//
+// namePrefix is part of project_name, which ends up in IAM role name prefixes that AWS
+// limits to 38 characters. Keep it at 14 characters or fewer.
+func runExample(t *testing.T, example string, namePrefix string, moduleArgs map[string]any) *terraform.Options {
+	t.Helper()
+
+	exampleFolder := test_structure.CopyTerraformFolderToTemp(t, "..", filepath.Join("examples", example))
+	writeTestOverride(t, exampleFolder, moduleArgs)
 
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir:    exampleFolder,
 		TerraformBinary: "tofu",
 		Vars: map[string]any{
-			"project_name": "test-complete-" + random.UniqueId(),
+			"project_name": namePrefix + random.UniqueId(),
 		},
 	})
 
 	// Make sure to destroy resources at the end of the test, regardless of whether the test passes or fails
-	defer terraform.Destroy(t, terraformOptions)
+	t.Cleanup(func() { terraform.Destroy(t, terraformOptions) })
 
 	// Deploy the infrastructure
 	terraform.InitAndApply(t, terraformOptions)
@@ -152,36 +177,47 @@ func TestExampleComplete(t *testing.T) {
 
 	t.Run("fsx_openzfs_outputs", func(t *testing.T) {
 		testFSxOpenZFSOutputs(t, terraformOptions)
+	})
+
+	return terraformOptions
+}
+
+func TestExampleComplete(t *testing.T) {
+	t.Parallel()
+
+	runExample(t, "complete", "test-complete-", nil)
+}
+
+// TestExampleCompleteSingleAZ runs the complete example with its nodes in one AZ. The
+// module adds a private subnet in a second AZ for the control plane only.
+func TestExampleCompleteSingleAZ(t *testing.T) {
+	t.Parallel()
+
+	terraformOptions := runExample(t, "complete", "test-saz-cmpl-", map[string]any{
+		"availability_zones": []string{"us-west-2a"},
+		// MULTI_AZ_1 needs subnets in two AZs.
+		"fsx_openzfs_deployment_type": "SINGLE_AZ_2",
+	})
+
+	t.Run("single_private_subnet", func(t *testing.T) {
+		testSinglePrivateSubnet(t, terraformOptions)
 	})
 }
 
 func TestExampleExistingResources(t *testing.T) {
 	t.Parallel()
 
-	exampleFolder := "../examples/existing-resources"
-	writeTestOverride(t, exampleFolder)
+	runExample(t, "existing-resources", "test-existing-", nil)
+}
 
-	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir:    exampleFolder,
-		TerraformBinary: "tofu",
-		Vars: map[string]any{
-			"project_name": "test-existing-" + random.UniqueId(),
-		},
-	})
+// TestExampleExistingResourcesSingleAZ runs the existing-resources example with its
+// nodes on the first of the example's private subnets and the control plane on the
+// first two, which are in different AZs.
+func TestExampleExistingResourcesSingleAZ(t *testing.T) {
+	t.Parallel()
 
-	// Make sure to destroy resources at the end of the test, regardless of whether the test passes or fails
-	defer terraform.Destroy(t, terraformOptions)
-
-	// Deploy the infrastructure
-	terraform.InitAndApply(t, terraformOptions)
-
-	kubectlOptions := configureKubectl(t, terraformOptions)
-
-	t.Run("ebs_csi_driver", func(t *testing.T) {
-		testEBSCSIDriver(t, kubectlOptions)
-	})
-
-	t.Run("fsx_openzfs_outputs", func(t *testing.T) {
-		testFSxOpenZFSOutputs(t, terraformOptions)
+	runExample(t, "existing-resources", "test-saz-exst-", map[string]any{
+		"existing_private_subnet_ids":       []string{"${aws_subnet.private[0].id}"},
+		"existing_control_plane_subnet_ids": []string{"${aws_subnet.private[0].id}", "${aws_subnet.private[1].id}"},
 	})
 }
