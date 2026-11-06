@@ -8,17 +8,22 @@ module "vpc" {
 
   cidr = var.vpc_cidr_block
 
-  azs             = local.availability_zones
+  azs             = local.vpc_availability_zones
   create_igw      = true
   private_subnets = local.private_subnets
   public_subnets  = local.public_subnets
 
-  private_subnet_tags = { "kubernetes.io/role/internal-elb" = "1" }
-  public_subnet_tags  = { "kubernetes.io/role/elb" = "1" }
+  # With one AZ, only that AZ's private subnet gets the internal load balancer tag, so
+  # the AWS Load Balancer Controller never uses the control-plane-only subnet.
+  private_subnet_tags        = local.single_az ? {} : { "kubernetes.io/role/internal-elb" = "1" }
+  private_subnet_tags_per_az = local.single_az ? { (local.availability_zones[0]) = { "kubernetes.io/role/internal-elb" = "1" } } : {}
+  public_subnet_tags         = { "kubernetes.io/role/elb" = "1" }
 
+  # One NAT gateway per AZ. With one AZ, the VPC module also knows the control plane AZ,
+  # so ask for a single NAT gateway, which it puts in the first AZ.
   enable_nat_gateway     = true
-  single_nat_gateway     = false
-  one_nat_gateway_per_az = true
+  single_nat_gateway     = local.single_az
+  one_nat_gateway_per_az = !local.single_az
 
   enable_dns_hostnames = true
   enable_dns_support   = true
@@ -71,6 +76,21 @@ resource "terraform_data" "node_group_availability_zones" {
     precondition {
       condition     = length(setsubtract(var.node_groups[each.key].availability_zones, keys(local.private_subnet_ids_by_az))) == 0
       error_message = "Node group ${each.key} availability_zones must be AZs with a cluster private subnet: ${join(", ", keys(local.private_subnet_ids_by_az))}."
+    }
+  }
+}
+
+# Fails the plan when the control plane subnets of an existing VPC are all in one AZ,
+# which EKS rejects at cluster creation. When the subnet IDs are unknown at plan
+# (subnets created in the same apply), this only runs at apply, and nothing makes the
+# cluster wait for it, so EKS may reject the subnets first.
+resource "terraform_data" "control_plane_availability_zones" {
+  count = var.create_vpc ? 0 : 1
+
+  lifecycle {
+    precondition {
+      condition     = length(local.existing_control_plane_subnet_azs) >= 2
+      error_message = "The control plane subnets are all in ${join(", ", local.existing_control_plane_subnet_azs)}, and EKS needs them in at least two AZs. To run the nodes in one AZ, set existing_control_plane_subnet_ids to the node subnets plus a subnet in a second AZ."
     }
   }
 }
@@ -130,6 +150,7 @@ module "eks" {
   vpc_id = var.create_vpc ? one(module.vpc[*].vpc_id) : var.existing_vpc_id
 
   subnet_ids                   = local.private_subnet_ids
+  control_plane_subnet_ids     = local.control_plane_subnet_ids
   endpoint_private_access      = var.endpoint_private_access
   endpoint_public_access       = var.endpoint_public_access
   endpoint_public_access_cidrs = var.endpoint_public_access_cidrs
@@ -232,7 +253,7 @@ module "vpc_endpoints" {
   project_name = var.project_name
 
   vpc_id          = one(module.vpc[*].vpc_id)
-  subnet_ids      = flatten(module.vpc[*].private_subnets)
+  subnet_ids      = local.private_subnet_ids
   route_table_ids = concat(flatten(module.vpc[*].public_route_table_ids), flatten(module.vpc[*].private_route_table_ids))
 
   interface_vpc_endpoint_services = local.interface_vpc_endpoint_services

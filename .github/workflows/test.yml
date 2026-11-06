@@ -16,6 +16,10 @@ on:
       - "test/**"
       - ".github/workflows/test.yml"
 
+concurrency:
+  group: integration-tests
+  cancel-in-progress: false
+
 env:
   TF_IN_AUTOMATION: true
 

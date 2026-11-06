@@ -118,16 +118,19 @@ module "cluster" {
 
 | Name | Type |
 |------|------|
+| [terraform_data.control_plane_availability_zones](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) | resource |
 | [terraform_data.node_group_availability_zones](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) | resource |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
+| [aws_availability_zones.control_plane](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
+| [aws_subnet.existing_control_plane](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet) | data source |
 | [aws_subnet.existing_private](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | List of availability zones to use. If not specified, automatically selects up to 3 available AZs in the region. | `list(string)` | `[]` | no |
+| <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | AZs the nodes run in, used if creating a new VPC. The module creates the public and private subnets, NAT gateways and VPC endpoints in these AZs. If not specified, automatically selects up to 3 available AZs in the region. With two or more AZs, the control plane uses the same private subnets as the nodes. With one AZ, the module also creates a private subnet in a second AZ for the control plane only, because EKS needs two AZs (see the control\_plane\_availability\_zone output). EKS rejects changes to the control plane AZs after creation, so grow a one-AZ cluster by adding control\_plane\_availability\_zone. | `list(string)` | `[]` | no |
 | <a name="input_cluster_enabled_log_types"></a> [cluster\_enabled\_log\_types](#input\_cluster\_enabled\_log\_types) | List of control plane logging types to enable. Default: ['authenticator']. Valid values: api, audit, authenticator, controllerManager, scheduler | `list(string)` | <pre>[<br/>  "authenticator"<br/>]</pre> | no |
 | <a name="input_create_iam_roles"></a> [create\_iam\_roles](#input\_create\_iam\_roles) | Whether to create new IAM roles for the EKS cluster and node groups. If false, existing\_cluster\_iam\_role\_arn and existing\_node\_iam\_role\_arn must be provided. | `bool` | `true` | no |
 | <a name="input_create_security_group"></a> [create\_security\_group](#input\_create\_security\_group) | Whether to create a new security group for the EKS cluster. If false, existing\_security\_group\_id must be provided. | `bool` | `true` | no |
@@ -149,6 +152,7 @@ module "cluster" {
 | <a name="input_endpoint_public_access"></a> [endpoint\_public\_access](#input\_endpoint\_public\_access) | Indicates whether the Amazon EKS public API server endpoint is enabled. | `bool` | `false` | no |
 | <a name="input_endpoint_public_access_cidrs"></a> [endpoint\_public\_access\_cidrs](#input\_endpoint\_public\_access\_cidrs) | List of CIDR blocks which can access the Amazon EKS public API server endpoint. | `list(string)` | <pre>[<br/>  "0.0.0.0/0"<br/>]</pre> | no |
 | <a name="input_existing_cluster_iam_role_arn"></a> [existing\_cluster\_iam\_role\_arn](#input\_existing\_cluster\_iam\_role\_arn) | ARN of an existing IAM role to use for the EKS cluster. Required when create\_iam\_roles is false. | `string` | `null` | no |
+| <a name="input_existing_control_plane_subnet_ids"></a> [existing\_control\_plane\_subnet\_ids](#input\_existing\_control\_plane\_subnet\_ids) | Existing private subnet IDs for the EKS control plane, used if not creating a new VPC. Leave empty to use existing\_private\_subnet\_ids. EKS needs control plane subnets in at least two AZs, so set this when the nodes run in one AZ, for example to the node subnet plus a subnet in a second AZ. Nodes, EFS and FSx keep using existing\_private\_subnet\_ids. On an existing cluster, the new subnets must be in the AZs the cluster was created with, or EKS rejects the change. | `list(string)` | `[]` | no |
 | <a name="input_existing_node_iam_role_arn"></a> [existing\_node\_iam\_role\_arn](#input\_existing\_node\_iam\_role\_arn) | ARN of an existing IAM role to use for the EKS node groups. Required when create\_iam\_roles is false. | `string` | `null` | no |
 | <a name="input_existing_private_route_table_ids"></a> [existing\_private\_route\_table\_ids](#input\_existing\_private\_route\_table\_ids) | Route tables of the existing private subnets, used if not creating a new VPC. Required for a MULTI\_AZ\_1 FSx for OpenZFS filesystem, which adds routes to its floating endpoint to them. Include the VPC's main route table if any of the subnets use it implicitly. | `list(string)` | `[]` | no |
 | <a name="input_existing_private_subnet_ids"></a> [existing\_private\_subnet\_ids](#input\_existing\_private\_subnet\_ids) | List of existing private subnet IDs to use if not creating a new VPC. With FSx for OpenZFS enabled, the first subnet (the first two for MULTI\_AZ\_1, in different AZs) hosts the filesystem, so reordering the list replaces the filesystem and loses its data. | `list(string)` | `[]` | no |
@@ -188,6 +192,7 @@ module "cluster" {
 | <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | The name of the EKS cluster |
 | <a name="output_cluster_oidc_issuer_url"></a> [cluster\_oidc\_issuer\_url](#output\_cluster\_oidc\_issuer\_url) | The URL on the EKS cluster for the OpenID Connect identity provider |
 | <a name="output_cluster_security_group_id"></a> [cluster\_security\_group\_id](#output\_cluster\_security\_group\_id) | Security group ID attached to the EKS cluster |
+| <a name="output_control_plane_availability_zone"></a> [control\_plane\_availability\_zone](#output\_control\_plane\_availability\_zone) | AZ of the control-plane-only private subnet the module adds when it creates a VPC with one AZ. Add it to availability\_zones to grow the cluster to two AZs without changing the control plane. Null otherwise. |
 | <a name="output_efs_arn"></a> [efs\_arn](#output\_efs\_arn) | The ARN of the EFS file system (null if EFS not enabled) |
 | <a name="output_efs_csi_driver_role_arn"></a> [efs\_csi\_driver\_role\_arn](#output\_efs\_csi\_driver\_role\_arn) | IAM role ARN for the EFS CSI driver (null if EFS not enabled) |
 | <a name="output_efs_dns_name"></a> [efs\_dns\_name](#output\_efs\_dns\_name) | The DNS name of the EFS file system (null if EFS not enabled) |
@@ -203,7 +208,7 @@ module "cluster" {
 | <a name="output_node_iam_role_arn"></a> [node\_iam\_role\_arn](#output\_node\_iam\_role\_arn) | IAM role ARN used by EKS node groups |
 | <a name="output_node_security_group_id"></a> [node\_security\_group\_id](#output\_node\_security\_group\_id) | ID of the node shared security group |
 | <a name="output_oidc_provider_arn"></a> [oidc\_provider\_arn](#output\_oidc\_provider\_arn) | ARN of the OIDC Provider for EKS (for IRSA) |
-| <a name="output_private_subnet_ids"></a> [private\_subnet\_ids](#output\_private\_subnet\_ids) | List of IDs of private subnets used by the EKS cluster |
+| <a name="output_private_subnet_ids"></a> [private\_subnet\_ids](#output\_private\_subnet\_ids) | List of IDs of private subnets the nodes use. Excludes the control-plane-only subnet of a single-AZ created VPC. |
 | <a name="output_public_subnet_ids"></a> [public\_subnet\_ids](#output\_public\_subnet\_ids) | List of IDs of created public subnets (empty list if using existing subnets) |
 | <a name="output_vpc_endpoints_security_group_id"></a> [vpc\_endpoints\_security\_group\_id](#output\_vpc\_endpoints\_security\_group\_id) | Security group ID used by VPC endpoints (null if VPC endpoints not created) |
 | <a name="output_vpc_id"></a> [vpc\_id](#output\_vpc\_id) | The ID of the VPC used by the EKS cluster |
