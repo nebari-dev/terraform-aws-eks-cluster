@@ -16,7 +16,7 @@ variable "tags" {
 # Networking
 ################################################################################
 variable "availability_zones" {
-  description = "List of availability zones to use. If not specified, automatically selects up to 3 available AZs in the region."
+  description = "AZs the nodes run in, used if creating a new VPC. The module creates the public and private subnets, NAT gateways and VPC endpoints in these AZs. If not specified, automatically selects up to 3 available AZs in the region. With two or more AZs, the control plane uses the same private subnets as the nodes. With one AZ, the module also creates a private subnet in a second AZ for the control plane only, because EKS needs two AZs (see the control_plane_availability_zone output). EKS rejects changes to the control plane AZs after creation, so grow a one-AZ cluster by adding control_plane_availability_zone at the end of the list. The order sets each AZ's subnets, so reordering the list replaces them."
   type        = list(string)
   default     = []
 }
@@ -53,6 +53,12 @@ variable "existing_private_subnet_ids" {
     condition     = var.create_vpc || length(var.existing_private_subnet_ids) > 0
     error_message = "When 'create_vpc' is false, 'existing_private_subnet_ids' must be provided with at least one subnet ID."
   }
+}
+
+variable "existing_control_plane_subnet_ids" {
+  description = "Existing private subnet IDs for the EKS control plane, used if not creating a new VPC. Leave empty to use existing_private_subnet_ids. EKS needs control plane subnets in at least two AZs, so set this when the nodes run in one AZ, for example to the node subnet plus a subnet in a second AZ. Nodes, EFS and FSx keep using existing_private_subnet_ids. On an existing cluster, the new subnets must be in the AZs the cluster was created with, or EKS rejects the change."
+  type        = list(string)
+  default     = []
 }
 
 variable "existing_private_route_table_ids" {
