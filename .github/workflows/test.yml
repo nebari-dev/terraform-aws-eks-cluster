@@ -19,6 +19,7 @@ on:
 concurrency:
   group: integration-tests
   cancel-in-progress: false
+  queue: max
 
 env:
   TF_IN_AUTOMATION: true
