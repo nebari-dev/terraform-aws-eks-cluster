@@ -66,7 +66,7 @@ output "private_subnet_ids" {
 }
 
 output "control_plane_availability_zone" {
-  description = "AZ of the control-plane-only private subnet the module adds when it creates a VPC with one AZ. Add it to availability_zones to grow the cluster to two AZs without changing the control plane. Null otherwise."
+  description = "AZ of the control-plane-only private subnet the module adds when it creates a VPC with one AZ. Null otherwise. Add it at the end of availability_zones to grow the cluster to two AZs without changing the control plane. Node groups without availability_zones also get the new subnet, which replaces them."
   value       = local.control_plane_availability_zone
 }
 

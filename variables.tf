@@ -16,7 +16,7 @@ variable "tags" {
 # Networking
 ################################################################################
 variable "availability_zones" {
-  description = "AZs the nodes run in, used if creating a new VPC. The module creates the public and private subnets, NAT gateways and VPC endpoints in these AZs. If not specified, automatically selects up to 3 available AZs in the region. With two or more AZs, the control plane uses the same private subnets as the nodes. With one AZ, the module also creates a private subnet in a second AZ for the control plane only, because EKS needs two AZs (see the control_plane_availability_zone output). EKS rejects changes to the control plane AZs after creation, so grow a one-AZ cluster by adding control_plane_availability_zone."
+  description = "AZs the nodes run in, used if creating a new VPC. The module creates the public and private subnets, NAT gateways and VPC endpoints in these AZs. If not specified, automatically selects up to 3 available AZs in the region. With two or more AZs, the control plane uses the same private subnets as the nodes. With one AZ, the module also creates a private subnet in a second AZ for the control plane only, because EKS needs two AZs (see the control_plane_availability_zone output). EKS rejects changes to the control plane AZs after creation, so grow a one-AZ cluster by adding control_plane_availability_zone at the end of the list. The order sets each AZ's subnets, so reordering the list replaces them."
   type        = list(string)
   default     = []
 }
