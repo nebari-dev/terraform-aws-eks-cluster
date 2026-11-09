@@ -4,13 +4,13 @@ data "aws_availability_zones" "available" {
 
 data "aws_region" "current" {}
 
-# Candidates for a second AZ for the control plane when the module creates a VPC with
-# one AZ, since EKS needs control plane subnets in two AZs. Excludes the AZs where EKS
-# can't create control planes, by zone ID because AZ names differ between accounts.
+# AZs to pick the control plane's second AZ from when the VPC has one AZ. The pick runs
+# on every plan, so this list must stay the same for a running cluster:
+# - No state filter: an AZ having an outage stays in the list.
+# - The excluded zone IDs are where EKS doesn't run. Never remove one, only add.
 data "aws_availability_zones" "control_plane" {
   count = local.single_az ? 1 : 0
 
-  state            = "available"
   exclude_zone_ids = ["use1-az3", "usw1-az2", "cac1-az3"]
 
   filter {
