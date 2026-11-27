@@ -177,6 +177,8 @@ module "cluster" {
 | <a name="input_project_name"></a> [project\_name](#input\_project\_name) | The name of the project. | `string` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to add to all resources | `map(string)` | `{}` | no |
 | <a name="input_vpc_cidr_block"></a> [vpc\_cidr\_block](#input\_vpc\_cidr\_block) | The CIDR block for the VPC. | `string` | `"10.0.0.0/16"` | no |
+| <a name="input_vpc_cni_network_policy_enabled"></a> [vpc\_cni\_network\_policy\_enabled](#input\_vpc\_cni\_network\_policy\_enabled) | Whether the vpc-cni addon enforces Kubernetes NetworkPolicy (`enableNetworkPolicy`). When false, NetworkPolicy objects are accepted by the API server but nothing enforces them. Turning this on for an existing cluster starts enforcing any NetworkPolicy already on it. | `bool` | `false` | no |
+| <a name="input_vpc_cni_network_policy_event_logs"></a> [vpc\_cni\_network\_policy\_event\_logs](#input\_vpc\_cni\_network\_policy\_event\_logs) | Whether the vpc-cni network policy agent logs allow and deny decisions (`nodeAgent.enablePolicyEventLogs`). Useful when debugging denied traffic. The decisions are written to `/var/log/aws-routed-eni/network-policy-agent.log` on each node; shipping them to CloudWatch (`nodeAgent.enableCloudWatchLogs`) stays off. Has no effect unless vpc\_cni\_network\_policy\_enabled is true. | `bool` | `false` | no |
 
 ## Outputs
 

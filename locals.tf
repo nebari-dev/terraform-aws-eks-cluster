@@ -37,6 +37,46 @@ data "aws_subnet" "existing_control_plane" {
 
 locals {
 
+  # Addons passed to the EKS module. A local so tests can check what each addon
+  # receives.
+  eks_addons = merge(
+    {
+      aws-ebs-csi-driver = {
+        pod_identity_association = [{
+          role_arn        = module.ebs_csi_pod_identity.iam_role_arn,
+          service_account = "ebs-csi-controller-sa"
+        }]
+      }
+      coredns = {}
+      eks-pod-identity-agent = {
+        before_compute = true
+      }
+      kube-proxy = {}
+      vpc-cni = {
+        before_compute = true
+        # The addon schema takes these settings as strings, not booleans. The
+        # configuration is sent even at the defaults on purpose:
+        # configuration_values is Optional + Computed in the AWS provider, so
+        # switching to null would plan no change, and turning
+        # vpc_cni_network_policy_enabled off would leave enforcement on.
+        configuration_values = jsonencode({
+          enableNetworkPolicy = tostring(var.vpc_cni_network_policy_enabled)
+          nodeAgent = {
+            enablePolicyEventLogs = tostring(var.vpc_cni_network_policy_event_logs)
+          }
+        })
+      }
+    },
+    var.efs_enabled ? {
+      aws-efs-csi-driver = {
+        pod_identity_association = [{
+          role_arn        = one(module.efs_csi_pod_identity[*].iam_role_arn)
+          service_account = "efs-csi-controller-sa"
+        }]
+      }
+    } : {}
+  )
+
   # Determine availability zones to use. If not specified, select up to 3 available AZs in the region.
   availability_zones = length(var.availability_zones) > 0 ? var.availability_zones : slice(
     data.aws_availability_zones.available.names,
