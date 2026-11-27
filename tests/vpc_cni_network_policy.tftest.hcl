@@ -1,7 +1,8 @@
-# Checks the configuration values passed to the vpc-cni addon. NetworkPolicy
-# enforcement and policy event logs are off by default, and each variable turns
-# its setting on. Runs against a mocked AWS provider, so no credentials or cloud
-# resources are needed.
+# Checks the configuration values passed to the vpc-cni addon. Reads the addon
+# map handed to the EKS module, so config placed on the wrong addon fails.
+# NetworkPolicy enforcement and policy event logs are off by default, and each
+# variable turns its setting on. Runs against a mocked AWS provider, so no
+# credentials or cloud resources are needed.
 
 mock_provider "aws" {
   mock_data "aws_subnet" {
@@ -76,12 +77,12 @@ run "network_policy_off_by_default" {
   }
 
   assert {
-    condition     = jsondecode(local.vpc_cni_configuration_values).enableNetworkPolicy == "false"
+    condition     = jsondecode(local.eks_addons["vpc-cni"].configuration_values).enableNetworkPolicy == "false"
     error_message = "enableNetworkPolicy should be \"false\" by default"
   }
 
   assert {
-    condition     = jsondecode(local.vpc_cni_configuration_values).nodeAgent.enablePolicyEventLogs == "false"
+    condition     = jsondecode(local.eks_addons["vpc-cni"].configuration_values).nodeAgent.enablePolicyEventLogs == "false"
     error_message = "nodeAgent.enablePolicyEventLogs should be \"false\" by default"
   }
 }
@@ -94,17 +95,17 @@ run "network_policy_enabled" {
   }
 
   variables {
-    network_policy_enabled = true
+    vpc_cni_network_policy_enabled = true
   }
 
   assert {
-    condition     = jsondecode(local.vpc_cni_configuration_values).enableNetworkPolicy == "true"
-    error_message = "enableNetworkPolicy should be \"true\" when network_policy_enabled is true"
+    condition     = jsondecode(local.eks_addons["vpc-cni"].configuration_values).enableNetworkPolicy == "true"
+    error_message = "enableNetworkPolicy should be \"true\" when vpc_cni_network_policy_enabled is true"
   }
 
   assert {
-    condition     = jsondecode(local.vpc_cni_configuration_values).nodeAgent.enablePolicyEventLogs == "false"
-    error_message = "nodeAgent.enablePolicyEventLogs should stay \"false\" unless network_policy_event_logs is true"
+    condition     = jsondecode(local.eks_addons["vpc-cni"].configuration_values).nodeAgent.enablePolicyEventLogs == "false"
+    error_message = "nodeAgent.enablePolicyEventLogs should stay \"false\" unless vpc_cni_network_policy_event_logs is true"
   }
 }
 
@@ -116,12 +117,12 @@ run "network_policy_event_logs_enabled" {
   }
 
   variables {
-    network_policy_enabled    = true
-    network_policy_event_logs = true
+    vpc_cni_network_policy_enabled    = true
+    vpc_cni_network_policy_event_logs = true
   }
 
   assert {
-    condition     = jsondecode(local.vpc_cni_configuration_values).nodeAgent.enablePolicyEventLogs == "true"
-    error_message = "nodeAgent.enablePolicyEventLogs should be \"true\" when network_policy_event_logs is true"
+    condition     = jsondecode(local.eks_addons["vpc-cni"].configuration_values).nodeAgent.enablePolicyEventLogs == "true"
+    error_message = "nodeAgent.enablePolicyEventLogs should be \"true\" when vpc_cni_network_policy_event_logs is true"
   }
 }

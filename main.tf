@@ -115,33 +115,7 @@ module "eks" {
   name               = var.project_name
   kubernetes_version = var.kubernetes_version
 
-  addons = merge(
-    {
-      aws-ebs-csi-driver = {
-        pod_identity_association = [{
-          role_arn        = module.ebs_csi_pod_identity.iam_role_arn,
-          service_account = "ebs-csi-controller-sa"
-        }]
-      }
-      coredns = {}
-      eks-pod-identity-agent = {
-        before_compute = true
-      }
-      kube-proxy = {}
-      vpc-cni = {
-        before_compute       = true
-        configuration_values = local.vpc_cni_configuration_values
-      }
-    },
-    var.efs_enabled ? {
-      aws-efs-csi-driver = {
-        pod_identity_association = [{
-          role_arn        = one(module.efs_csi_pod_identity[*].iam_role_arn)
-          service_account = "efs-csi-controller-sa"
-        }]
-      }
-    } : {}
-  )
+  addons = local.eks_addons
 
   # Use existing security group if provided or have EKS create one otherwise
   create_security_group = var.create_security_group
