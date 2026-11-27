@@ -312,6 +312,21 @@ variable "enable_irsa" {
 }
 
 ################################################################################
+# VPC CNI
+################################################################################
+variable "network_policy_enabled" {
+  description = "Whether the vpc-cni addon enforces Kubernetes NetworkPolicy (`enableNetworkPolicy`). When false, NetworkPolicy objects are accepted by the API server but nothing enforces them. Turning this on for an existing cluster starts enforcing any NetworkPolicy already on it."
+  type        = bool
+  default     = false
+}
+
+variable "network_policy_event_logs" {
+  description = "Whether the vpc-cni network policy agent logs allow and deny decisions (`nodeAgent.enablePolicyEventLogs`). Useful when debugging denied traffic. Has no effect unless network_policy_enabled is true."
+  type        = bool
+  default     = false
+}
+
+################################################################################
 # EFS
 ################################################################################
 variable "efs_enabled" {

@@ -37,6 +37,15 @@ data "aws_subnet" "existing_control_plane" {
 
 locals {
 
+  # Configuration for the vpc-cni addon. The addon schema takes these settings
+  # as strings, not booleans.
+  vpc_cni_configuration_values = jsonencode({
+    enableNetworkPolicy = tostring(var.network_policy_enabled)
+    nodeAgent = {
+      enablePolicyEventLogs = tostring(var.network_policy_event_logs)
+    }
+  })
+
   # Determine availability zones to use. If not specified, select up to 3 available AZs in the region.
   availability_zones = length(var.availability_zones) > 0 ? var.availability_zones : slice(
     data.aws_availability_zones.available.names,

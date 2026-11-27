@@ -129,7 +129,8 @@ module "eks" {
       }
       kube-proxy = {}
       vpc-cni = {
-        before_compute = true
+        before_compute       = true
+        configuration_values = local.vpc_cni_configuration_values
       }
     },
     var.efs_enabled ? {
